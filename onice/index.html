@@ -215,11 +215,11 @@ function apply(L){
 
 /* ---------- qué plano corresponde a cada vista ---------- */
 function sheetOf(v){
-  if(v.lvl===0) return {url:'img/general_1.webp',alt:'Plano general de implantación con los seis edificios'};
+  if(v.lvl===0) return {url:'img/general_1.webp?v=20261027',alt:'Plano general de implantación con los seis edificios'};
   const t=B[v.b].tipo;
-  if(v.lvl===1) return {url:`img/edif_${t}.webp`,alt:`Plano del edificio ${v.b}, tipo ${t}`};
+  if(v.lvl===1) return {url:`img/edif_${t}.webp?v=20261027`,alt:`Plano del edificio ${v.b}, tipo ${t}`};
   const n=v.c.split('.')[1];
-  return {url:`img/t${DT[t]}_${n}.webp`,alt:`Plano de detalle de la cubierta ${v.c}`};
+  return {url:`img/t${DT[t]}_${n}.webp?v=20261027`,alt:`Plano de detalle de la cubierta ${v.c}`};
 }
 function zonesOf(v){
   if(v.lvl===0) return DATA.buildings.map(b=>({id:b.id,tipo:b.tipo,poly:b.poly,lab:b.lab,text:b.id,
@@ -418,7 +418,7 @@ new ResizeObserver(()=>{ const f0=cur?fitCam().k:0; const old=vw; measure(); if(
 
 /* ---------- arranque ---------- */
 function preload(){ const seen=new Set(); const q=[]; const t=view.lvl?B[view.b].tipo:null;
-  DATA.buildings.forEach(b=>q.push(`img/edif_${b.tipo}.webp`)); if(t) T[t].cubs.forEach(c=>q.push(`img/t${DT[t]}_${c.id.split('.')[1]}.webp`));
+  DATA.buildings.forEach(b=>q.push(`img/edif_${b.tipo}.webp?v=20261027`)); if(t) T[t].cubs.forEach(c=>q.push(`img/t${DT[t]}_${c.id.split('.')[1]}.webp?v=20261027`));
   const go_=()=>{const u=q.shift(); if(!u) return; if(!seen.has(u)){seen.add(u); const i=new Image(); i.onload=i.onerror=()=>setTimeout(go_,60); i.src=u;} else go_();};
   if(window.requestIdleCallback) requestIdleCallback(go_,{timeout:1500}); else setTimeout(go_,400); }
 function fromHash(){ const h=decodeURIComponent(location.hash.slice(1)); const m=h.match(/^e([0-9.]+)(?:_c([0-9.]+))?$/); if(m&&B[m[1]]){
