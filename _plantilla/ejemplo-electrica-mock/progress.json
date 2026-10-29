@@ -1,0 +1,69 @@
+{
+ "obra": "EJEMPLO-ELECTRICA",
+ "updated": "2026-10-29T16:58:00+01:00",
+ "zones": {
+  "P.S./CINE": {
+   "replanteo": {
+    "done": true,
+    "by": "J.",
+    "date": "2026-10-29"
+   },
+   "tubo": {
+    "done": true,
+    "by": "J.",
+    "date": "2026-10-29"
+   },
+   "cajas_distribucion": {
+    "done": true,
+    "by": "J.",
+    "date": "2026-10-29"
+   }
+  },
+  "P.S./HALL": {
+   "replanteo": {
+    "done": true,
+    "by": "J.",
+    "date": "2026-10-28"
+   }
+  },
+  "P.S./SAUNA": {
+   "replanteo": {
+    "done": true,
+    "by": "A.",
+    "date": "2026-10-29"
+   },
+   "tubo": {
+    "done": true,
+    "by": "A.",
+    "date": "2026-10-29"
+   },
+   "cajas_distribucion": {
+    "done": true,
+    "by": "A.",
+    "date": "2026-10-29"
+   },
+   "cajas_registro": {
+    "done": true,
+    "by": "A.",
+    "date": "2026-10-29"
+   },
+   "cableado": {
+    "done": true,
+    "by": "A.",
+    "date": "2026-10-29"
+   }
+  },
+  "P.B./COCINA": {
+   "replanteo": {
+    "done": true,
+    "by": "A.",
+    "date": "2026-10-27"
+   },
+   "tubo": {
+    "done": true,
+    "by": "A.",
+    "date": "2026-10-27"
+   }
+  }
+ }
+}
