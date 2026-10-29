@@ -3,9 +3,9 @@
 Estado: **propuesta** (29/10/2026). El checklist **eléctrico** es el dado por IEC (29/10/2026); el **fotovoltaico** está aún por determinar y es provisional. El visor ya lee el avance; falta implementar el resto en la App IEC (Claude Code) y en Airtable.
 
 ## Reparto de responsabilidades
-- **App IEC**: avisa, muestra el checklist de la zona y **escribe** el avance en Airtable.
+- **App IEC**: avisa a las 16:55, abre el visor de planos de la obra identificando al usuario, y **escribe** el avance en Airtable (a través de un endpoint propio; el visor nunca lleva claves de Airtable).
 - **Airtable (base IEC)**: guarda el registro diario.
-- **Visor de planos (GitHub Pages)**: solo **lee** el avance y lo pinta (panel izquierdo y barras sobre los planos). No lleva ninguna clave de Airtable.
+- **Visor de planos (GitHub Pages)**: **lee** el avance y lo pinta (panel izquierdo y barras sobre los planos). Dentro de la App (con token) el instalador **marca los checks sobre el plano** y el visor envía cada cambio a la App. Fuera de la App es de solo lectura.
 
 ## 1. Checklists (fuente única: `_plantilla/checklists.json`)
 - Fotovoltaica (provisional, borrador de la pizarra): Replanteo, Perforaciones + pernos, Estructura, Cableado (optimizadores), Paneles. Pendiente confirmar el «opt» de la pizarra.
@@ -26,7 +26,7 @@ Estado: **propuesta** (29/10/2026). El checklist **eléctrico** es el dado por I
 | Registrado el | Fecha de creación | Automático |
 
 - **Estado vigente** de un check = último registro por (Proyecto, Zona, Check). Así se conserva el historial diario y el visor siempre ve lo último.
-- **Quién marca:** el **instalador**, desde la App IEC (decidido 29/10/2026). El visor es solo de lectura. Cualquier trabajador asignado a la obra ese día puede abrir la pantalla de checks; `Responsable` guarda el usuario que inició sesión.
+- **Quién marca:** el **instalador**, **sobre el plano interactivo abierto dentro de la App IEC** (decidido 29/10/2026; no hay pantalla de checks aparte). Fuera de la App el visor es solo de lectura. Cualquier trabajador asignado a la obra ese día puede abrir la pantalla de checks; `Responsable` guarda el usuario que inició sesión.
 - **Responsable del día** (quien recibe el aviso de las 16:55; decidido 29/10/2026: **cambia según el día**, porque a la obra van personas distintas): campo nuevo «Responsable del día» (enlace a un solo Trabajador) en `Días de obra`. Se elige entre los trabajadores de ese día (`Trabajadores disponibles`) y se puede fijar desde la interfaz «Calendario de obra» al asignar trabajadores. No hay responsable fijo en `Proyectos`. Si el campo queda vacío, el aviso va a todos los trabajadores de ese día de obra.
 - Para decidir el checklist (eléctrica o fotovoltaica) se puede usar «Tipo proyecto» de Proyectos (o «Tipo Instalación» de Días de obra, que ya viene de Proyecto). Hay que confirmar sus valores.
 
@@ -55,18 +55,30 @@ Estado: **propuesta** (29/10/2026). El checklist **eléctrico** es el dado por I
 - Destinatario: el **Responsable del día** (ver §2); si no hay, los trabajadores asignados a ese día de obra. Notificación push de la App IEC.
 - Cómo llega: `Usuarios` ya tiene `FirebaseUid` y `TokenNotificaciones`, así que la App usa Firebase. El aviso lo manda una tarea programada en el backend de la App (p. ej. Cloud Scheduler + Cloud Function, Europe/Madrid) que lee `Días de obra` de hoy, busca el usuario del responsable (`Usuarios` → `Trabajador`) y envía el push (FCM) a su `TokenNotificaciones`. Alternativa: una Automation de Airtable programada a las 16:55 que llame a un endpoint de la App. Claude Code debe comprobar cuál encaja con el backend actual.
 - Un solo token por usuario (`TokenNotificaciones` es un texto): si cambia de móvil, se actualiza al iniciar sesión.
-- Texto propuesto: «Rellena los checks de hoy · <nombre del proyecto>». Al tocarla abre la pantalla de checks de esa obra.
+- Texto propuesto: «Rellena los checks de hoy · <nombre del proyecto>». Al tocarla abre el plano de esa obra dentro de la App.
 - Abierto a decidir: recordatorio si a una hora fijada no hay ningún registro del día.
 
-## 5. Pantalla de checks en la App
-1. Elegir zona (cubierta o estancia) de la obra; mostrar su estado vigente.
-2. Lista de checks del tipo de instalación, con casillas grandes (uso con guantes y al sol).
-3. Al marcar o desmarcar, crear un registro en «Avance de obra» solo si el estado cambia respecto al vigente.
-4. Poder cambiar de zona sin salir (siguiente/anterior), como el paginador del visor.
-5. **Sin cobertura:** guardar los cambios en el móvil (el proyecto Android ya usa Room) y sincronizar con Airtable al recuperar conexión; cada registro lleva su fecha y hora reales de marcado.
+## 3b. Escritura desde el visor (dentro de la App)
+El visor ya está preparado (rama `checklists-obra`). En `data.json`: `cfg.modo: "escritura"`, `cfg.writeUrl: "<URL de la App>/avance"` y `cfg.progressUrl` (lectura).
+- **Identificación:** la App abre el visor en un WebView e **inyecta antes de cargar la página** `window.IEC_AUTH = {token: "<token corto del usuario>", iniciales: "J."}` (en Android, p. ej. `WebViewCompat.addDocumentStartJavaScript`). Sin `IEC_AUTH` el visor es de solo lectura y avisa «abre el plano desde la App IEC». El token debe ser de corta duración y limitado a escribir avance; nunca la clave de Airtable.
+- **Qué envía** (un `POST` JSON por cambio, con `Authorization: Bearer <token>`):
+  ```json
+  {"obra": "EJEMPLO-ELECTRICA", "zona": "P.S./CINE", "check": "tubo", "done": true, "ts": "2026-10-29T13:36:17.031Z"}
+  ```
+  `ts` es la hora real del marcado (en el móvil). La App responde `200` si lo acepta. El servidor **no debe fiarse de nada más que del token** para saber quién es: el `Responsable` y las iniciales salen del usuario del token. Debe ser idempotente (mismo `obra`+`zona`+`check`+`ts` no duplica).
+- **Códigos:** `401/403` → el visor muestra «la sesión ha caducado» y conserva los cambios; `5xx`, `429` o sin conexión → los cambios quedan en una cola en el móvil y se reintentan cada 20 s, al volver la conexión y al volver a la app; otro `4xx` → se descarta ese cambio (datos inválidos).
+- **Cola sin conexión:** se guarda en el almacenamiento del WebView (`localStorage`). La App no debe borrar los datos del WebView entre sesiones. El panel muestra «Sin enviar» en cada check pendiente y cuántos faltan.
+- **CORS:** el endpoint debe aceptar `POST` con `Authorization` desde `https://iec-group011.github.io` (preflight `OPTIONS`).
+- **Aviso 16:55 → abrir el plano:** la notificación abre el visor de esa obra, preferiblemente en la estancia o planta que toque (`#e<nivel1>_c<nivel2>`).
+
+## 5. Marcar sobre el plano (uso en obra)
+1. El instalador abre el plano de la obra desde la App, en el móvil en horizontal, y toca la estancia (o la cubierta).
+2. A la izquierda aparecen los checks de esa zona con casillas de 44 px; los marca tocándolos. Cada toque se envía solo, sin botón «Guardar».
+3. En pantalla completa, los checks salen en un cajón a la izquierda del plano.
+4. El avance de planta/edificio y el total de la obra se actualizan al momento.
 
 ## Pendiente de confirmar
 - Lista definitiva de checks **fotovoltaicos**, incluido el significado de «Cableado : opt» de la pizarra. En eléctrica, confirmar si la lista dada («en general») es la definitiva o puede variar por obra.
-- Resuelto: los checks los marca el instalador en la **pantalla de la App**, no en el visor (que es de solo lectura; `cfg.modo: "demo"` solo es para pruebas).
+- Resuelto: los checks los marca el instalador **sobre el plano**, dentro de la App (WebView con token). No hay pantalla de checks separada.
 - Resuelto: el responsable cambia cada día (campo en `Días de obra`). Falta decidir si la interfaz «Calendario de obra» lo pide al crear el día o se rellena a posteriori.
 - La «Tornillería gral» de la pizarra (6Ø, 8Ø, arandelas, tuercas, tirafondos, tacos): no se ha incluido; parece un listado de material por obra, no un check.

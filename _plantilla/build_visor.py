@@ -28,8 +28,10 @@ def main(carpeta: str) -> None:
     elif cfg.get("checklist") is False:
         cfg["checklist"] = []
 
-    if cfg.get("modo") not in (None, "lectura", "demo"):
-        sys.exit('data.json: cfg.modo debe ser "lectura" o "demo"')
+    if cfg.get("modo") not in (None, "lectura", "demo", "escritura"):
+        sys.exit('data.json: cfg.modo debe ser "lectura", "demo" o "escritura"')
+    if cfg.get("modo") == "escritura" and not cfg.get("writeUrl"):
+        sys.exit('data.json: cfg.modo "escritura" necesita cfg.writeUrl (endpoint POST de la App IEC)')
 
     plantilla = (AQUI / "template.html").read_text(encoding="utf-8")
     if "__DATA__" not in plantilla:

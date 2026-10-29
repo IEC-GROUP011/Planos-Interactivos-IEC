@@ -19,7 +19,8 @@
 - `kind`: `fotovoltaica` o `electrica` (cambia textos y checklist). Niveles: Implantación → Edificio → Cubierta (FV) o Plano general → Planta → Estancia (eléctrica).
 - `col` (1–4): color de la zona (`--t1`…`--t4`); si falta se usa `tipo`. `img` opcional en edificio y cubierta/estancia; si falta, nombres `edif_<tipo>.webp` y `t<tipo>_<n>.webp`.
 - `dt`: cruce de planos de detalle por tipo (solo si los PDF vinieron cruzados). Sin `cfg` se aplica el cruce antiguo de Ónice.
-- `modo`: `lectura` (por defecto; el visor solo lee el avance) o `demo` (permite marcar y guarda en el navegador, para pruebas).
+- `modo`: `lectura` (por defecto; el visor solo lee el avance), `demo` (permite marcar y guarda en el navegador, para pruebas) o `escritura` (dentro de la App IEC: con `window.IEC_AUTH` inyectado por la App se puede marcar y cada cambio se envía por `POST` a `cfg.writeUrl`; sin él, solo lectura). Ver `ESPECIFICACION_APP_IEC.md` §3b.
+- `writeUrl`: endpoint `POST` de la App (obligatorio con `modo: "escritura"`).
 - `checklist: false` desactiva el panel de checks. Sin `progressUrl` el panel se muestra sin avance.
 - Imágenes: hoja A3 de 1191×842 (coordenadas de zonas en esos puntos), en `img/`.
 - Enlaces profundos: `#e<nivel1>` y `#e<nivel1>_c<nivel2>` (p. ej. `#eP.S._cCINE`).
