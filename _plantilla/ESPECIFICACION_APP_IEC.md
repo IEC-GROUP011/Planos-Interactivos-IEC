@@ -53,22 +53,26 @@ Estado: **propuesta** (29/10/2026). El checklist **eléctrico** es el dado por I
 - Tarea programada diaria a las **16:55, zona horaria Europe/Madrid** (no UTC, para que respete el cambio de hora).
 - Solo se envía si el proyecto tiene un **Día de obra** ese día (tabla «Días de obra»: Proyecto + «Día de obra») y su tipo de instalación tiene checklist.
 - Destinatario: el **Responsable del día** (ver §2); si no hay, los trabajadores asignados a ese día de obra. Notificación push de la App IEC.
-- Cómo llega: `Usuarios` ya tiene `FirebaseUid` y `TokenNotificaciones`, así que la App usa Firebase. El aviso lo manda una tarea programada en el backend de la App (p. ej. Cloud Scheduler + Cloud Function, Europe/Madrid) que lee `Días de obra` de hoy, busca el usuario del responsable (`Usuarios` → `Trabajador`) y envía el push (FCM) a su `TokenNotificaciones`. Alternativa: una Automation de Airtable programada a las 16:55 que llame a un endpoint de la App. Claude Code debe comprobar cuál encaja con el backend actual.
+- Cómo llega: el backend ya usa Firebase (FCM) para avisos al móvil. El aviso lo dispara **Cloud Scheduler** (zona Europe/Madrid, 16:55) llamando a una ruta de administración del BFF protegida (p. ej. cuenta de servicio), que lee `Días de obra` de hoy, resuelve el usuario del responsable (`Usuarios` → `Trabajador`) y envía el push (FCM) a su `TokenNotificaciones`. Claude Code debe comprobar cómo envía hoy el backend los avisos y reutilizarlo.
 - Un solo token por usuario (`TokenNotificaciones` es un texto): si cambia de móvil, se actualiza al iniciar sesión.
+- Rutas nuevas en el BFF: crear un servicio propio (p. ej. `AvanceService`) en vez de crecer `AirtableService` (~5.450 líneas); los campos de Airtable se acceden **por ID**.
 - Texto propuesto: «Rellena los checks de hoy · <nombre del proyecto>». Al tocarla abre el plano de esa obra dentro de la App.
 - Abierto a decidir: recordatorio si a una hora fijada no hay ningún registro del día.
 
 ## 3b. Escritura desde el visor (dentro de la App)
 El visor ya está preparado (rama `checklists-obra`). En `data.json`: `cfg.modo: "escritura"`, `cfg.writeUrl: "<URL de la App>/avance"` y `cfg.progressUrl` (lectura).
-- **Identificación:** la App abre el visor en un WebView e **inyecta antes de cargar la página** `window.IEC_AUTH = {token: "<token corto del usuario>", iniciales: "J."}` (en Android, p. ej. `WebViewCompat.addDocumentStartJavaScript`). Sin `IEC_AUTH` el visor es de solo lectura y avisa «abre el plano desde la App IEC». El token debe ser de corta duración y limitado a escribir avance; nunca la clave de Airtable.
+- **Identificación (arquitectura real de la App, según `APP_IEC_Arquitectura_y_patrones_de_diseno.pdf`, 8/10/2026):** la App Android nunca habla con Airtable; todo pasa por el backend (BFF, Ktor en Cloud Run), que verifica el **token de Firebase** de cada petición y guarda las claves. Aquí se reutiliza ese mismo mecanismo: la App abre el visor en un WebView e **inyecta antes de cargar la página** `window.IEC_AUTH = {getToken: <función que devuelve el ID token vigente de Firebase>, iniciales: "J."}` (en Android: `WebViewCompat.addDocumentStartJavaScript` con la lista de orígenes permitidos `https://iec-group011.github.io`, y un `@JavascriptInterface` que devuelve el token). `getToken()` se llama en cada envío porque el token de Firebase caduca cada hora (alternativa más simple: `token` fijo, con riesgo de caducidad). Sin `IEC_AUTH` el visor es de solo lectura.
+- **Seguridad del WebView:** inyectar el token **solo** si el WebView carga ese origen, y no permitir que navegue a otros sitios. No se crea ningún sistema de tokens nuevo.
 - **Qué envía** (un `POST` JSON por cambio, con `Authorization: Bearer <token>`):
   ```json
-  {"obra": "EJEMPLO-ELECTRICA", "zona": "P.S./CINE", "check": "tubo", "done": true, "ts": "2026-10-29T13:36:17.031Z"}
+  {"external_id": "EJEMPLO-ELECTRICA|P.S./CINE|tubo|2026-10-29T13:36:17.031Z", "obra": "EJEMPLO-ELECTRICA", "zona": "P.S./CINE", "check": "tubo", "done": true, "ts": "2026-10-29T13:36:17.031Z"}
   ```
-  `ts` es la hora real del marcado (en el móvil). La App responde `200` si lo acepta. El servidor **no debe fiarse de nada más que del token** para saber quién es: el `Responsable` y las iniciales salen del usuario del token. Debe ser idempotente (mismo `obra`+`zona`+`check`+`ts` no duplica).
+  `ts` es la hora real del marcado (en el móvil). La App responde `200` si lo acepta. El servidor **no debe fiarse de nada más que del token** para saber quién es: el `Responsable` y las iniciales salen del usuario del token. Debe ser **idempotente por `external_id`** (reenviar actualiza, no duplica), igual que el resto de la App.
 - **Códigos:** `401/403` → el visor muestra «la sesión ha caducado» y conserva los cambios; `5xx`, `429` o sin conexión → los cambios quedan en una cola en el móvil y se reintentan cada 20 s, al volver la conexión y al volver a la app; otro `4xx` → se descarta ese cambio (datos inválidos).
 - **Cola sin conexión:** se guarda en el almacenamiento del WebView (`localStorage`). La App no debe borrar los datos del WebView entre sesiones. El panel muestra «Sin enviar» en cada check pendiente y cuántos faltan.
-- **CORS:** el endpoint debe aceptar `POST` con `Authorization` desde `https://iec-group011.github.io` (preflight `OPTIONS`).
+- **CORS:** el BFF hoy sirve a una app móvil; hay que añadir CORS para `https://iec-group011.github.io` (`POST` y `GET` con `Authorization`, preflight `OPTIONS`) solo en estas rutas.
+- **Lectura:** dentro de la App el visor lee `cfg.progressUrl` con el token; fuera de la App (enlace público) lee sin token. Esa lectura pública, con iniciales, sería la única ruta sin autenticar del BFF: decidir si se mantiene o si el avance solo se ve dentro de la App.
+- **Alternativa futura (más acorde con la arquitectura offline-first de la App):** que el visor entregue cada cambio a la App por un `@JavascriptInterface` y la App lo guarde en Room y lo suba con WorkManager (outbox con reintentos). Hoy la cola vive en el WebView y solo sube mientras el visor está abierto; con la alternativa subiría también en segundo plano.
 - **Aviso 16:55 → abrir el plano:** la notificación abre el visor de esa obra, preferiblemente en la estancia o planta que toque (`#e<nivel1>_c<nivel2>`).
 
 ## 5. Marcar sobre el plano (uso en obra)

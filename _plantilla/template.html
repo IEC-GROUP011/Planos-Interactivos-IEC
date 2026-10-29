@@ -299,7 +299,9 @@ const DEMO=CFG.modo==='demo';                               // demo: se puede ma
 /* escritura: solo dentro de la App IEC. La App inyecta window.IEC_AUTH={token,iniciales} antes de cargar la página;
    sin token el visor es de solo lectura. El visor nunca lleva claves de Airtable: envía los cambios a cfg.writeUrl con ese token. */
 const WRITE=CFG.modo==='escritura'&&!!CFG.writeUrl;
-const AUTH=()=>(window.IEC_AUTH&&window.IEC_AUTH.token)?window.IEC_AUTH:null;
+const AUTH=()=>(window.IEC_AUTH&&(window.IEC_AUTH.token||window.IEC_AUTH.getToken))?window.IEC_AUTH:null;
+/* token vigente: si la App ofrece getToken() (recomendado: el token de Firebase caduca cada hora) se pide en cada envío */
+async function tok(){ const A=AUTH(); if(!A) return null; try{ return A.getToken?await A.getToken():A.token; }catch(e){ return null; } }
 const CAN=()=>DEMO||(WRITE&&!!AUTH());
 const colOf=b=>B[b].col||B[b].tipo;
 const tipoTxt=t=>KIND==='electrica'?'':`Tipo ${t}`;
@@ -334,7 +336,8 @@ async function loadProgress(){
   if(CFG.progressUrl){
     const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),5000);
     try{
-      const r=await fetch(CFG.progressUrl+(CFG.progressUrl.includes('?')?'&':'?')+'t='+Date.now(),{cache:'no-store',signal:ctl.signal});
+      const t=WRITE?await tok():null;                   // dentro de la App se lee con el token; fuera, lectura pública
+      const r=await fetch(CFG.progressUrl+(CFG.progressUrl.includes('?')?'&':'?')+'t='+Date.now(),{cache:'no-store',signal:ctl.signal,headers:t?{Authorization:'Bearer '+t}:{}});
       if(!r.ok) throw new Error('HTTP '+r.status);
       const j=await r.json(); if(!j||typeof j.zones!=='object') throw new Error('formato');
       PROG={zones:j.zones,updated:j.updated||null,error:false};
@@ -355,7 +358,8 @@ async function flushQ(){
   if(!WRITE||flushing||!QUEUE.length||!AUTH()) return; flushing=true;
   try{
     while(QUEUE.length){
-      const r=await fetch(CFG.writeUrl,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+AUTH().token},body:JSON.stringify(QUEUE[0])});
+      const t=await tok(); if(!t){ AUTHFAIL=true; break; }
+      const r=await fetch(CFG.writeUrl,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify(QUEUE[0])});
       if(r.status===401||r.status===403){ AUTHFAIL=true; break; }
       if(r.status>=500||r.status===429) break;          // fallo temporal: se reintenta más tarde
       AUTHFAIL=false; QUEUE.shift(); saveQ();            // aceptado (o rechazado por datos inválidos: no se reintenta)
@@ -367,7 +371,7 @@ function toggleCheck(b,c,id){
   if(!CAN()) return;
   const key=PKEY(b,c), z=PROG.zones[key]||(PROG.zones[key]={}), d=!isDone(b,c,id), now=new Date().toISOString();
   if(DEMO){ z[id]=d?{done:true,by:'Demo',date:now.slice(0,10)}:{done:false}; saveLocal(); }
-  else { QUEUE.push({obra:CFG.obraId||'',zona:key,check:id,done:d,ts:now}); saveQ(); applyQueue(); flushQ(); }
+  else { QUEUE.push({external_id:[CFG.obraId||'',key,id,now].join('|'),obra:CFG.obraId||'',zona:key,check:id,done:d,ts:now}); saveQ(); applyQueue(); flushQ(); }
   PROG.updated=now; refreshProg();
 }
 
