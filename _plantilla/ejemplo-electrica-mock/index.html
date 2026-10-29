@@ -505,9 +505,10 @@ function renderChecks(){
   row.append(h,cnt); head.append(ey,row,p,bar); row.insertAdjacentHTML('beforeend',ICON_CH);
   head.addEventListener('click',()=>{ if(!matchMedia('(max-width:820px)').matches) return; const o=checks.classList.toggle('open'); head.setAttribute('aria-expanded',o); });
   const note=document.createElement('div'); note.className='cnote';
-  note.textContent=PROG.error?'No se pudo leer el avance; se reintentará en un minuto.'
+  const prov=CFG.checklistProvisional?'Checklist provisional. ':'';
+  note.textContent=prov+(PROG.error?'No se pudo leer el avance; se reintentará en un minuto.'
     :DEMO?'Modo demostración: los checks se guardan solo en este navegador.'
-    :PROG.updated?`Última actualización: ${fmtStamp(PROG.updated)}. Los checks se rellenan desde la App IEC.`:'Todavía no hay registros. Los checks se rellenan desde la App IEC.';
+    :PROG.updated?`Última actualización: ${fmtStamp(PROG.updated)}. Los checks se rellenan desde la App IEC.`:'Todavía no hay registros. Los checks se rellenan desde la App IEC.');
   checks.replaceChildren(head,body,note);
 }
 

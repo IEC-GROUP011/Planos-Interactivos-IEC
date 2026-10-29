@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "nota": "Plantillas de checklist del visor de planos IEC. Un checklist por tipo de instalación; se marca en el nivel más concreto (cubierta en fotovoltaica, estancia en eléctrica). Los ids no deben cambiar una vez hay registros en Airtable.",
+  "nota": "Plantillas de checklist del visor de planos IEC. Un checklist por tipo de instalación (AMBOS AÚN POR DETERMINAR: son provisionales); se marca en el nivel más concreto (cubierta en fotovoltaica, estancia en eléctrica). Los ids no deben cambiar una vez hay registros en Airtable.",
   "fotovoltaica": {
-    "origen": "Pizarra del 29/10/2026",
-    "provisional": false,
+    "origen": "Borrador a partir de la pizarra del 29/10/2026; el checklist definitivo aún está por determinar",
+    "provisional": true,
     "nivel": "cubierta",
     "pendiente_confirmar": "En la pizarra pone «Cableado : opt». Confirmar si es optimizadores u opcional.",
     "checks": [
@@ -15,7 +15,7 @@
     ]
   },
   "electrica": {
-    "origen": "MOCK provisional a partir de la leyenda de la pizarra; lo definitivo lo pasa un compañero de obra",
+    "origen": "MOCK a partir de la leyenda de la pizarra; el checklist definitivo aún está por determinar (lo pasa un compañero de obra)",
     "provisional": true,
     "nivel": "estancia",
     "checks": [

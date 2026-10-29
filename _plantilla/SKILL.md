@@ -12,16 +12,18 @@ Antes de pedir nada más, preguntar con AskUserQuestion: **«¿La instalación e
 
 | | Fotovoltaica (`fotovoltaica`) | Eléctrica (`electrica`) |
 |---|---|---|
-| Niveles | Implantación → Edificio → Cubierta | Plano general → Planta (P.B., P.A., P.S., Anexo…) → Estancia (Cine, Hall, Sauna, Salón, CGMP…) |
+| Niveles | Implantación → Edificio → Cubierta | Plano general → Planta → Estancia |
 | Color de zona | Por tipo de edificio | Por planta |
 | Checklist (nivel más concreto) | Cubierta | Estancia |
 
-Los checks son prácticamente idénticos entre instalaciones del mismo tipo; viven en `_plantilla/checklists.json` (fuente única, también para la App IEC). El checklist eléctrico es **provisional (mock)** hasta que un compañero de obra pase el definitivo: avisarlo al usuario cada vez que se use.
+**Los nombres y el número de zonas (edificios, plantas, cubiertas, estancias) salen siempre de los planos que dé el usuario**; nunca asumir los de los ejemplos (Cine, Hall, P.S.…, que son solo ilustrativos).
+
+Los checks son prácticamente idénticos entre instalaciones del mismo tipo; viven en `_plantilla/checklists.json` (fuente única, también para la App IEC). **Los checklists de ambos tipos están aún por determinar**: los actuales son provisionales (el eléctrico es un mock) y el visor muestra «Checklist provisional». Avisar al usuario cada vez que se use; si da la lista definitiva, actualizar `checklists.json` y poner `provisional: false`.
 
 ## Entradas que hay que pedir
 Comunes: PDF del plano general; PDF con el plano de cada nivel intermedio; PDFs de detalle (una página por cubierta o estancia); cómo se nombran las zonas; si hay varios juegos (estructuras, strings), plantear un selector.
 - **Fotovoltaica:** edificios marcados por colores (mismo color = mismo tipo, distinta colocación). Colores usados en Ónice: tipo 1 azul #2776BB, tipo 2 verde #129C47, tipo 3 rojo #E5242A, tipo 4 amarillo #E4C400.
-- **Eléctrica:** plantas del plano general y estancias de cada planta. Pedir también si hay plano de detalle por estancia; si no, usar la hoja de la planta.
+- **Eléctrica:** plantas (o zonas) del plano general y las estancias de cada planta, con los nombres que figuren en los planos. Pedir también si hay plano de detalle por estancia; si no, usar la hoja de la planta.
 
 ## Dónde está el código
 Repositorio GitHub `IEC-GROUP011/Planos-Interactivos-IEC` (si no está en la sesión, añadirlo con acceso de escritura):
