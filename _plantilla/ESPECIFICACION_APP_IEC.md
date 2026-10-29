@@ -27,7 +27,7 @@ Estado: **propuesta** (29/10/2026). El checklist **eléctrico** es el dado por I
 
 - **Estado vigente** de un check = último registro por (Proyecto, Zona, Check). Así se conserva el historial diario y el visor siempre ve lo último.
 - **Quién marca:** el **instalador**, desde la App IEC (decidido 29/10/2026). El visor es solo de lectura. Cualquier trabajador asignado a la obra ese día puede abrir la pantalla de checks; `Responsable` guarda el usuario que inició sesión.
-- **Responsable del día** (quien recibe el aviso de las 16:55): hoy no existe en la base (`Proyectos` solo tiene «Responsable de Oferta» y «Contacto de obra»). Propuesta: campo «Responsable del día» (enlace a Trabajadores) en `Días de obra`, que se rellena por defecto con un «Responsable de obra» del proyecto (campo nuevo en `Proyectos`). Si queda vacío, el aviso va a todos los trabajadores de ese día de obra.
+- **Responsable del día** (quien recibe el aviso de las 16:55; decidido 29/10/2026: **cambia según el día**, porque a la obra van personas distintas): campo nuevo «Responsable del día» (enlace a un solo Trabajador) en `Días de obra`. Se elige entre los trabajadores de ese día (`Trabajadores disponibles`) y se puede fijar desde la interfaz «Calendario de obra» al asignar trabajadores. No hay responsable fijo en `Proyectos`. Si el campo queda vacío, el aviso va a todos los trabajadores de ese día de obra.
 - Para decidir el checklist (eléctrica o fotovoltaica) se puede usar «Tipo proyecto» de Proyectos (o «Tipo Instalación» de Días de obra, que ya viene de Proyecto). Hay que confirmar sus valores.
 
 ## 3. Lectura para el visor
@@ -68,5 +68,5 @@ Estado: **propuesta** (29/10/2026). El checklist **eléctrico** es el dado por I
 ## Pendiente de confirmar
 - Lista definitiva de checks **fotovoltaicos**, incluido el significado de «Cableado : opt» de la pizarra. En eléctrica, confirmar si la lista dada («en general») es la definitiva o puede variar por obra.
 - Resuelto: los checks los marca el instalador en la **pantalla de la App**, no en el visor (que es de solo lectura; `cfg.modo: "demo"` solo es para pruebas).
-- Si el «Responsable del día» es fijo por proyecto o cambia cada día (propuesta: campo por día con valor por defecto del proyecto).
+- Resuelto: el responsable cambia cada día (campo en `Días de obra`). Falta decidir si la interfaz «Calendario de obra» lo pide al crear el día o se rellena a posteriori.
 - La «Tornillería gral» de la pizarra (6Ø, 8Ø, arandelas, tuercas, tirafondos, tacos): no se ha incluido; parece un listado de material por obra, no un check.
