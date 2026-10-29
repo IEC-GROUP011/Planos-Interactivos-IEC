@@ -1,29 +1,67 @@
 {
   "version": 1,
-  "nota": "Plantillas de checklist del visor de planos IEC. Un checklist por tipo de instalación (AMBOS AÚN POR DETERMINAR: son provisionales); se marca en el nivel más concreto (cubierta en fotovoltaica, estancia en eléctrica). Los ids no deben cambiar una vez hay registros en Airtable.",
+  "nota": "Plantillas de checklist del visor de planos IEC. Un checklist por tipo de instalación; se marca en el nivel más concreto (cubierta en fotovoltaica, estancia en eléctrica). Eléctrica: lista dada por IEC (29/10/2026). Fotovoltaica: aún por determinar (provisional). Los ids no deben cambiar una vez hay registros en Airtable.",
   "fotovoltaica": {
     "origen": "Borrador a partir de la pizarra del 29/10/2026; el checklist definitivo aún está por determinar",
     "provisional": true,
     "nivel": "cubierta",
     "pendiente_confirmar": "En la pizarra pone «Cableado : opt». Confirmar si es optimizadores u opcional.",
     "checks": [
-      {"id": "replanteo", "label": "Replanteo"},
-      {"id": "perforaciones", "label": "Perforaciones + pernos"},
-      {"id": "estructura", "label": "Estructura"},
-      {"id": "cableado", "label": "Cableado (optimizadores)"},
-      {"id": "paneles", "label": "Paneles"}
+      {
+        "id": "replanteo",
+        "label": "Replanteo"
+      },
+      {
+        "id": "perforaciones",
+        "label": "Perforaciones + pernos"
+      },
+      {
+        "id": "estructura",
+        "label": "Estructura"
+      },
+      {
+        "id": "cableado",
+        "label": "Cableado (optimizadores)"
+      },
+      {
+        "id": "paneles",
+        "label": "Paneles"
+      }
     ]
   },
   "electrica": {
-    "origen": "MOCK a partir de la leyenda de la pizarra; el checklist definitivo aún está por determinar (lo pasa un compañero de obra)",
-    "provisional": true,
+    "origen": "Lista dada por IEC el 29/10/2026: checks generales de las instalaciones eléctricas",
+    "provisional": false,
     "nivel": "estancia",
     "checks": [
-      {"id": "replanteo", "label": "Replanteo"},
-      {"id": "tubo", "label": "Tubo y fijaciones (tacos y bridas)"},
-      {"id": "cajas_distribucion", "label": "Cajas de distribución"},
-      {"id": "cajas_registro", "label": "Cajas de registro"},
-      {"id": "cableado", "label": "Cableado"}
+      {
+        "id": "tubo",
+        "label": "Tubo"
+      },
+      {
+        "id": "caja",
+        "label": "Caja"
+      },
+      {
+        "id": "cable",
+        "label": "Cable"
+      },
+      {
+        "id": "mecanismos",
+        "label": "Mecanismos"
+      },
+      {
+        "id": "embellecedores",
+        "label": "Embellecedores"
+      },
+      {
+        "id": "luminarias",
+        "label": "Luminarias"
+      },
+      {
+        "id": "cajetines",
+        "label": "Cajetines"
+      }
     ]
   }
 }

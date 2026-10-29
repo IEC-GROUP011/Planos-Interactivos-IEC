@@ -18,7 +18,7 @@ Antes de pedir nada más, preguntar con AskUserQuestion: **«¿La instalación e
 
 **Los nombres y el número de zonas (edificios, plantas, cubiertas, estancias) salen siempre de los planos que dé el usuario**; nunca asumir los de los ejemplos (Cine, Hall, P.S.…, que son solo ilustrativos).
 
-Los checks son prácticamente idénticos entre instalaciones del mismo tipo; viven en `_plantilla/checklists.json` (fuente única, también para la App IEC). **Los checklists de ambos tipos están aún por determinar**: los actuales son provisionales (el eléctrico es un mock) y el visor muestra «Checklist provisional». Avisar al usuario cada vez que se use; si da la lista definitiva, actualizar `checklists.json` y poner `provisional: false`.
+Los checks son prácticamente idénticos entre instalaciones del mismo tipo; viven en `_plantilla/checklists.json` (fuente única, también para la App IEC). **Eléctrica:** tubo, caja, cable, mecanismos, embellecedores, luminarias y cajetines (lista dada por IEC el 29/10/2026, «en general»). **Fotovoltaica:** aún por determinar; el checklist actual es provisional y el visor muestra «Checklist provisional». Avisar al usuario cuando se use un checklist provisional; si da la lista definitiva, actualizar `checklists.json` y poner `provisional: false`.
 
 ## Entradas que hay que pedir
 Comunes: PDF del plano general; PDF con el plano de cada nivel intermedio; PDFs de detalle (una página por cubierta o estancia); cómo se nombran las zonas; si hay varios juegos (estructuras, strings), plantear un selector.

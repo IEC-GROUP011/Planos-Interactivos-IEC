@@ -2,7 +2,7 @@
 
 - `template.html`: visor completo (HTML+CSS+JS). El marcador `__DATA__` se sustituye por el JSON del proyecto.
 - `build_visor.py`: `python3 _plantilla/build_visor.py <carpeta_proyecto>` lee `<carpeta>/data.json` y escribe `<carpeta>/index.html` (inyecta el checklist de `checklists.json` según `cfg.kind`).
-- `checklists.json`: checklist de cada tipo de instalación (fuente única; la App IEC debe leer los mismos `id`). **Ambos están aún por determinar (provisionales)**; mientras lo sean, el panel muestra «Checklist provisional».
+- `checklists.json`: checklist de cada tipo de instalación (fuente única; la App IEC debe leer los mismos `id`). Eléctrica: lista dada por IEC (tubo, caja, cable, mecanismos, embellecedores, luminarias, cajetines). Fotovoltaica: **aún por determinar (provisional)**; mientras lo sea, el panel muestra «Checklist provisional».
 - `SKILL.md`: copia versionada de la skill `planos-interactivos-iec`.
 - `ESPECIFICACION_APP_IEC.md`: tabla de Airtable, lectura del avance, aviso de las 16:55 y pantalla de checks.
 - `ejemplo-onice/`: datos del proyecto fotovoltaico de Ónice (formato antiguo, sin `cfg`: sigue funcionando) y `build.py` con cómo se obtuvieron las zonas.

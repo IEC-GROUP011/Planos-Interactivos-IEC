@@ -74,7 +74,7 @@ for ident, key, col, r in BLOQUES:
         im2, d2 = hoja(f"{ident} · {eid}")
         d2.rectangle([160, 140, W - 160, H - 140], outline="#222", width=4)
         d2.text((W / 2, H / 2), eid, fill="#222", font=font(64), anchor="mm")
-        for i, nombre in enumerate(("Tubo", "Caja distribución", "Caja registro")):
+        for i, nombre in enumerate(("Tubo", "Caja", "Cable")):
             d2.text((190, 170 + i * 34), "• " + nombre, fill="#777", font=font(20))
         im2.save(AQUI / "img" / f"{key}_{eid}.webp", quality=80)
     im.save(AQUI / "img" / f"edif_{key}.webp", quality=80)
@@ -98,10 +98,10 @@ progreso = {
     "obra": "EJEMPLO-ELECTRICA",
     "updated": "2026-10-29T16:58:00+01:00",
     "zones": {
-        "P.S./CINE": {c: {"done": True, "by": "J.", "date": "2026-10-29"} for c in ("replanteo", "tubo", "cajas_distribucion")},
-        "P.S./HALL": {"replanteo": {"done": True, "by": "J.", "date": "2026-10-28"}},
-        "P.S./SAUNA": {c: {"done": True, "by": "A.", "date": "2026-10-29"} for c in ("replanteo", "tubo", "cajas_distribucion", "cajas_registro", "cableado")},
-        "P.B./COCINA": {c: {"done": True, "by": "A.", "date": "2026-10-27"} for c in ("replanteo", "tubo")},
+        "P.S./CINE": {c: {"done": True, "by": "J.", "date": "2026-10-29"} for c in ("tubo", "caja", "cable")},
+        "P.S./HALL": {"tubo": {"done": True, "by": "J.", "date": "2026-10-28"}},
+        "P.S./SAUNA": {c: {"done": True, "by": "A.", "date": "2026-10-29"} for c in ("tubo", "caja", "cable", "mecanismos", "embellecedores", "luminarias", "cajetines")},
+        "P.B./COCINA": {c: {"done": True, "by": "A.", "date": "2026-10-27"} for c in ("tubo", "caja")},
     },
 }
 (AQUI / "progress.json").write_text(json.dumps(progreso, ensure_ascii=False, indent=1), encoding="utf-8")

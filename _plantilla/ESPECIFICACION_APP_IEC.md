@@ -1,6 +1,6 @@
 # Especificación para la App IEC: checks diarios de avance de obra
 
-Estado: **propuesta** (29/10/2026). Los checklists de **ambos tipos (fotovoltaica y eléctrica) están aún por determinar**: los actuales son provisionales y se sustituirán por los definitivos. El visor ya lee el avance; falta implementar el resto en la App IEC (Claude Code) y en Airtable.
+Estado: **propuesta** (29/10/2026). El checklist **eléctrico** es el dado por IEC (29/10/2026); el **fotovoltaico** está aún por determinar y es provisional. El visor ya lee el avance; falta implementar el resto en la App IEC (Claude Code) y en Airtable.
 
 ## Reparto de responsabilidades
 - **App IEC**: avisa, muestra el checklist de la zona y **escribe** el avance en Airtable.
@@ -9,7 +9,7 @@ Estado: **propuesta** (29/10/2026). Los checklists de **ambos tipos (fotovoltaic
 
 ## 1. Checklists (fuente única: `_plantilla/checklists.json`)
 - Fotovoltaica (provisional, borrador de la pizarra): Replanteo, Perforaciones + pernos, Estructura, Cableado (optimizadores), Paneles. Pendiente confirmar el «opt» de la pizarra.
-- Eléctrica (MOCK, provisional): Replanteo, Tubo y fijaciones, Cajas de distribución, Cajas de registro, Cableado.
+- Eléctrica (dada por IEC, 29/10/2026): Tubo, Caja, Cable, Mecanismos, Embellecedores, Luminarias, Cajetines.
 - Se marcan en el **nivel más concreto**: cubierta (FV) o estancia (eléctrica). El avance de edificio/planta y el total de la obra se calculan sumando.
 - Los nombres de zona (edificios, plantas, cubiertas, estancias) **no están fijados aquí**: salen de los planos de cada proyecto. Los de los ejemplos (Cine, Hall…) son solo ilustrativos.
 - Mientras el checklist esté por determinar, se puede cambiar libremente; una vez haya registros en Airtable, los `id` de los checks no se cambian (solo se añaden o se renombran etiquetas).
@@ -62,6 +62,6 @@ Estado: **propuesta** (29/10/2026). Los checklists de **ambos tipos (fotovoltaic
 4. Poder cambiar de zona sin salir (siguiente/anterior), como el paginador del visor.
 
 ## Pendiente de confirmar
-- Lista definitiva de checks, **fotovoltaica y eléctrica** (la eléctrica la pasa un compañero de obra). Incluye el significado de «Cableado : opt» de la pizarra.
+- Lista definitiva de checks **fotovoltaicos**, incluido el significado de «Cableado : opt» de la pizarra. En eléctrica, confirmar si la lista dada («en general») es la definitiva o puede variar por obra.
 - Si el responsable también marcará los checks **dentro del visor** (WebView en la App) además de en la pantalla propia. Hoy el visor es de solo lectura; `cfg.modo: "demo"` permite marcar pero solo guarda en el navegador (para pruebas).
 - La «Tornillería gral» de la pizarra (6Ø, 8Ø, arandelas, tuercas, tirafondos, tacos): no se ha incluido; parece un listado de material por obra, no un check.
