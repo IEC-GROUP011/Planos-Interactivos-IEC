@@ -294,6 +294,7 @@ const LB=Object.assign(KIND==='electrica'
 // cruce de planos de detalle por tipo (solo proyectos antiguos sin cfg: los PDF de Ónice venían cruzados)
 const DT=CFG.dt||(DATA.cfg?{}:{1:2,2:1,3:3,4:4});
 const dt=t=>DT[t]!==undefined?DT[t]:t;
+const IV=CFG.imgV?`?v=${CFG.imgV}`:'';   // versión de las imágenes (evita planos viejos en caché)
 const CL=Array.isArray(CFG.checklist)?CFG.checklist:[];   // checklist del nivel más concreto (ver checklists.json)
 const DEMO=CFG.modo==='demo';                               // demo: se puede marcar y se guarda solo en este navegador
 /* escritura: solo dentro de la App IEC. La App inyecta window.IEC_AUTH={token,iniciales} antes de cargar la página;
@@ -308,7 +309,7 @@ const tipoTxt=t=>KIND==='electrica'?'':`Tipo ${t}`;
 const cubsOf=b=>T[B[b].tipo].cubs;
 const cn=c=>(c.n!=null&&LB.unit)?`${c.n} ${LB.unit}`:'';
 const join=(...a)=>a.filter(Boolean).join(' · ');
-const detailUrl=(t,c)=>c.img||`img/t${dt(t)}_${c.id.split('.')[1]}.webp`;
+const detailUrl=(t,c)=>(c.img||`img/t${dt(t)}_${c.id.split('.')[1]}.webp`)+IV;
 let vw=0, vh=0, cur=null, busy=false, view=null;
 
 /* ---------- avance de obra (lo escribe la App IEC en Airtable; el visor solo lo lee) ---------- */
@@ -398,9 +399,9 @@ function apply(L){
 
 /* ---------- qué plano corresponde a cada vista ---------- */
 function sheetOf(v){
-  if(v.lvl===0) return {url:'img/general_1.webp',alt:CFG.alt0||`Plano general con ${DATA.buildings.length} ${LB.l1p.toLowerCase()}`};
+  if(v.lvl===0) return {url:'img/general_1.webp'+IV,alt:CFG.alt0||`Plano general con ${DATA.buildings.length} ${LB.l1p.toLowerCase()}`};
   const t=B[v.b].tipo;
-  if(v.lvl===1) return {url:B[v.b].img||`img/edif_${t}.webp`,alt:`Plano: ${LB.l1.toLowerCase()} ${v.b}${KIND==='electrica'?'':', tipo '+t}`};
+  if(v.lvl===1) return {url:(B[v.b].img||`img/edif_${t}.webp`)+IV,alt:`Plano: ${LB.l1.toLowerCase()} ${v.b}${KIND==='electrica'?'':', tipo '+t}`};
   const c=cubsOf(v.b).find(c=>c.id===v.c);
   return {url:detailUrl(t,c),alt:`Plano de detalle: ${LB.l2.toLowerCase()} ${v.c}`};
 }
@@ -705,7 +706,7 @@ new ResizeObserver(()=>{ const f0=cur?fitCam().k:0; const old=vw; measure(); if(
 
 /* ---------- arranque ---------- */
 function preload(){ const seen=new Set(); const q=[]; const t=view.lvl?B[view.b].tipo:null;
-  DATA.buildings.forEach(b=>q.push(b.img||`img/edif_${b.tipo}.webp`)); if(t) T[t].cubs.forEach(c=>q.push(detailUrl(t,c)));
+  DATA.buildings.forEach(b=>q.push((b.img||`img/edif_${b.tipo}.webp`)+IV)); if(t) T[t].cubs.forEach(c=>q.push(detailUrl(t,c)));
   const go_=()=>{const u=q.shift(); if(!u) return; if(!seen.has(u)){seen.add(u); const i=new Image(); i.onload=i.onerror=()=>setTimeout(go_,60); i.src=u;} else go_();};
   if(window.requestIdleCallback) requestIdleCallback(go_,{timeout:1500}); else setTimeout(go_,400); }
 function fromHash(){ const h=decodeURIComponent(location.hash.slice(1)); const m=h.match(/^e([^_]+)(?:_c(.+))?$/); if(m&&B[m[1]]){
