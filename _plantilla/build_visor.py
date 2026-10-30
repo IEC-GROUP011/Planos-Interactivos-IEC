@@ -21,7 +21,12 @@ def main(carpeta: str) -> None:
     if kind not in ("fotovoltaica", "electrica"):
         sys.exit('data.json: cfg.kind debe ser "fotovoltaica" o "electrica"')
 
-    if "checklist" not in cfg and cfg.get("checklist") is not False:
+    if cfg.get("capas"):
+        # proyectos con capas (Estructura / Paneles / Strings): un único check «completado» por capa y cubierta;
+        # las capas de nivel "string" se marcan por string, no por cubierta
+        cfg["checklist"] = [{"id": c["id"], "label": c["label"]} for c in cfg["capas"] if c.get("nivel") != "string"]
+        cfg["checklistProvisional"] = False
+    elif "checklist" not in cfg and cfg.get("checklist") is not False:
         cl = json.loads((AQUI / "checklists.json").read_text(encoding="utf-8"))[kind]
         cfg["checklist"] = [{"id": c["id"], "label": c["label"]} for c in cl["checks"]]
         cfg["checklistProvisional"] = bool(cl.get("provisional"))

@@ -19,8 +19,8 @@ Estado: **propuesta** (29/10/2026). El checklist **eléctrico** es el dado por I
 |---|---|---|
 | Proyecto | Enlace a Proyectos | La obra |
 | Fecha | Fecha | Día al que corresponde el registro |
-| Zona | Texto | `<nivel 1>/<nivel 2>`: `1.1/1.4` (edificio/cubierta) o `P.S./CINE` (planta/estancia) |
-| Check | Texto | `id` de `checklists.json` (`replanteo`, `tubo`…) |
+| Zona | Texto | `<nivel 1>/<nivel 2>`: `E1-1/3` (bloque/cubierta) o `P.S./CINE` (planta/estancia). En proyectos con capas, los strings van como `<edificio>/<string>`: `E1/S4` |
+| Check | Texto | `id` de `checklists.json` (`replanteo`, `tubo`…). En proyectos con capas (Ónice): `estructura` o `paneles` por cubierta y `string` por string; cada uno es un único «completado» con su fecha |
 | Hecho | Casilla | Marcado o desmarcado |
 | Responsable | Enlace a Usuarios o Trabajadores | Quien rellena (el que use la App para iniciar sesión) |
 | Registrado el | Fecha de creación | Automático |

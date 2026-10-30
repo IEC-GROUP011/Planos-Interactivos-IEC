@@ -236,6 +236,21 @@ button.chk:hover{background:var(--hot)}
 .checks.ovl .cclose{display:grid;place-items:center;position:absolute;top:2px;right:2px;width:44px;height:44px;border:0;border-radius:10px;background:none;cursor:pointer;color:var(--muted)}
 .checks.ovl .cclose svg{width:20px;height:20px}
 .cpill:focus-visible,.cclose:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* Capas de planos (p. ej. Estructura / Paneles / Strings): selector sobre el plano, abajo a la izquierda */
+.capas{position:absolute;left:12px;bottom:12px;z-index:4;display:flex;gap:2px;padding:3px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+.capas[hidden]{display:none}
+.capas button{height:34px;padding:0 12px;border:0;border-radius:7px;background:none;cursor:pointer;font:600 13px var(--sans);color:var(--muted);white-space:nowrap}
+.capas button:hover{color:var(--accent)}
+.capas button[aria-checked="true"]{background:var(--accent);color:var(--accent-ink)}
+.capas button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stage.cdrawer .capas{left:calc(min(280px,100% - 80px) + 18px)}
+.lvl0.marcos .zone polygon{stroke-opacity:.95;stroke-width:2.2;fill-opacity:.07}
+.zone.done polygon{fill:var(--ok);fill-opacity:.2}
+.zone.mark{pointer-events:none}
+.zone.mark polygon{fill-opacity:.08;stroke-width:3.5}
+.chk.cur .lbl{color:var(--accent)}
+@media (max-width:820px){.capas{left:8px;bottom:8px}.capas button{height:40px;padding:0 11px}}
+@media (orientation:landscape) and (max-height:520px){.capas button{height:44px}}
 @media (prefers-reduced-motion:reduce){.zone polygon{transition:none}}
 </style>
 
@@ -263,6 +278,7 @@ button.chk:hover{background:var(--hot)}
       <div class="fsmenu" id="fsmenu"></div>
     </div>
     <button class="cpill" id="cpill" type="button" aria-label="Mostrar checks" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l2 2 3-3.5M4 17l2 2 3-3.5M12 7.5h8M12 17.5h8"/></svg><span>Checks</span><b id="cpc"></b></button>
+    <div class="capas" id="capas" role="radiogroup" aria-label="Qué planos ver" hidden></div>
     <div class="ctl">
       <button id="zin" aria-label="Acercar" title="Acercar (+)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
       <button id="zout" aria-label="Alejar" title="Alejar (−)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
@@ -283,7 +299,7 @@ const stage=document.getElementById('stage'), side=document.getElementById('side
       hint=document.getElementById('hint'), loading=document.getElementById('loading');
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const B=Object.fromEntries(DATA.buildings.map(b=>[b.id,b]));
-const T=DATA.tipos;
+const T=DATA.tipos||{};
 
 /* ---------- configuración por tipo de instalación ---------- */
 const CFG=DATA.cfg||{};
@@ -305,8 +321,26 @@ const AUTH=()=>(window.IEC_AUTH&&(window.IEC_AUTH.token||window.IEC_AUTH.getToke
 async function tok(){ const A=AUTH(); if(!A) return null; try{ return A.getToken?await A.getToken():A.token; }catch(e){ return null; } }
 const CAN=()=>DEMO||(WRITE&&!!AUTH());
 const colOf=b=>B[b].col||B[b].tipo;
-const tipoTxt=t=>KIND==='electrica'?'':`Tipo ${t}`;
-const cubsOf=b=>T[B[b].tipo].cubs;
+const tipoTxt=t=>(KIND==='electrica'||t==null)?'':`Tipo ${t}`;
+const cubsOf=b=>B[b].cubs||T[B[b].tipo].cubs;
+/* capas: varios juegos de planos del mismo bloque (Estructura, Paneles, Strings). Cada bloque trae sus hojas por capa
+   (hojas[capa].img y, si la hoja no es la de estructura, hojas[capa].tf = [escala, dx, dy] para llevar las zonas a esa hoja). */
+const CAPAS=Array.isArray(CFG.capas)&&CFG.capas.length?CFG.capas:null;
+const capaOf=id=>CAPAS&&CAPAS.find(c=>c.id===id);
+const STRC=CAPAS?CAPAS.find(c=>c.nivel==='string'):null;
+let CAPA=CAPAS?CAPAS[0].id:null;
+const isStr=()=>!!(STRC&&CAPA===STRC.id);
+const SCHK='string';                                         // id del check de cada string
+const edOf=b=>B[b].ed||b;
+const bTxt=b=>B[b].ed?`Edificio ${B[b].ed.replace(/^E/,'')}`:tipoTxt(B[b].tipo);
+const hoja=(b,capa)=>B[b].hojas&&B[b].hojas[capa||CAPA];
+const tfP=(tf,P)=>tf?P.map(([x,y])=>[x*tf[0]+tf[1],y*tf[0]+tf[2]]):P;
+const cubPoly=(b,c,capa)=>{const h=hoja(b,capa); return tfP(h&&h.tf,c.poly);};
+const cubLab=(b,c,capa)=>cubPoly(b,{poly:[c.lab]},capa)[0];
+const cubName=(b,c)=>CAPAS?`${b}.${c}`:c;
+const strsOf=b=>{const h=hoja(b,STRC&&STRC.id); return h&&h.items?h.items:[];};
+const strInfo=(e,id)=>((DATA.strings||{})[e]||[]).find(s=>s.id===id)||{id};
+const bPanels=b=>{const t=T[B[b].tipo]; if(t&&t.panels!=null) return t.panels; const s=cubsOf(b).reduce((a,c)=>a+(c.n||0),0); return s||null;};
 const cn=c=>(c.n!=null&&LB.unit)?`${c.n} ${LB.unit}`:'';
 const join=(...a)=>a.filter(Boolean).join(' · ');
 const detailUrl=(t,c)=>(c.img||`img/t${dt(t)}_${c.id.split('.')[1]}.webp`)+IV;
@@ -326,6 +360,13 @@ function agg(list){
   for(const [b,c] of list) per.forEach(p=>{ if(isDone(b,c,p.k.id)){p.d++;done++;} });
   const max=list.length*CL.length;
   return {n:list.length,per,done,max,pct:max?Math.round(100*done/max):0};
+}
+function capaAgg(id,blocks){
+  const c=capaOf(id); let n=0,d=0;
+  if(c.nivel==='string'){ const seen=new Set();
+    for(const b of blocks) for(const s of strsOf(b)){ const k=edOf(b)+'/'+s; if(seen.has(k)) continue; seen.add(k); n++; if(isDone(edOf(b),s,SCHK)) d++; } }
+  else for(const b of blocks) for(const cb of cubsOf(b)){ n++; if(isDone(b,cb.id,id)) d++; }
+  return {n,d,pct:n?Math.round(100*d/n):0,unit:c.nivel==='string'?(n===1?'string':'strings'):(n===1?LB.l2.toLowerCase():LB.l2p.toLowerCase())};
 }
 const LSKEY='iec-avance:'+(CFG.obraId||location.pathname);
 function mergeLocal(){ try{ const j=JSON.parse(localStorage.getItem(LSKEY)||'null'); if(!j||!j.zones) return;
@@ -381,6 +422,7 @@ const measure=()=>{const r=stage.getBoundingClientRect(); vw=r.width; vh=r.heigh
 const fitCam=()=>{const pad=Math.max(8,Math.min(vw,vh)*0.02); const k=Math.min((vw-2*pad)/SW,(vh-2*pad)/SH); return {k,x:(vw-SW*k)/2,y:(vh-SH*k)/2};};
 const bboxOf=P=>{let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9; for(const [x,y] of P){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);} return {x0,y0,x1,y1};};
 const bboxCam=(b,f=0.8)=>{const w=b.x1-b.x0,h=b.y1-b.y0; const k=Math.min(vw*f/w,vh*f/h); return {k,x:vw/2-(b.x0+w/2)*k,y:vh/2-(b.y0+h/2)*k};};
+const homeCam=L=>L&&L.focus?bboxCam(L.focus,0.86):fitCam();   // encuadre inicial: hoja entera o la zona enfocada
 const lerp=(a,b,t)=>a+(b-a)*t;
 const toC=c=>({k:c.k,cx:(vw/2-c.x)/c.k,cy:(vh/2-c.y)/c.k});
 const fromC=c=>({k:c.k,x:vw/2-c.cx*c.k,y:vh/2-c.cy*c.k});
@@ -399,6 +441,14 @@ function apply(L){
 
 /* ---------- qué plano corresponde a cada vista ---------- */
 function sheetOf(v){
+  if(CAPAS&&v.lvl>0){
+    const cp=capaOf(CAPA), h=hoja(v.b);
+    if(v.lvl===1) return {url:h.img+IV,alt:`Plano de ${cp.label.toLowerCase()}: ${LB.l1.toLowerCase()} ${v.b}`,
+      focus:h.tf?bboxOf(cubsOf(v.b).flatMap(c=>cubPoly(v.b,c))):null};
+    const c=cubsOf(v.b).find(c=>c.id===v.c), det=c.det&&c.det[CAPA];
+    if(det) return {url:det+IV,alt:`Plano de detalle de ${cp.label.toLowerCase()}: ${LB.l2.toLowerCase()} ${cubName(v.b,v.c)}`};
+    return {url:h.img+IV,alt:`Plano de ${cp.label.toLowerCase()} centrado en la ${LB.l2.toLowerCase()} ${cubName(v.b,v.c)}`,focus:bboxOf(cubPoly(v.b,c)),mark:c};
+  }
   if(v.lvl===0) return {url:'img/general_1.webp'+IV,alt:CFG.alt0||`Plano general con ${DATA.buildings.length} ${LB.l1p.toLowerCase()}`};
   const t=B[v.b].tipo;
   if(v.lvl===1) return {url:(B[v.b].img||`img/edif_${t}.webp`)+IV,alt:`Plano: ${LB.l1.toLowerCase()} ${v.b}${KIND==='electrica'?'':', tipo '+t}`};
@@ -407,6 +457,17 @@ function sheetOf(v){
 }
 function zonesOf(v){
   const hasP=CL.length>0;
+  if(CAPAS){
+    if(v.lvl===0) return DATA.buildings.map(b=>{const np=bPanels(b.id), base=np!=null?`${np} ${LB.unit}`:`${cubsOf(b.id).length} ${LB.l2p.toLowerCase()}`;
+      return {id:b.id,col:colOf(b.id),poly:b.poly,lab:b.lab,text:b.id,title:`${LB.l1} ${b.id}`,sub:bTxt(b.id),
+        aria:`${LB.l1} ${b.id}, ${join(bTxt(b.id),base)}`.replace(/ · /g,', '),n:base,pct:()=>capaAgg(CAPA,[b.id]).pct,go:{lvl:1,b:b.id}};});
+    if(v.lvl===1){ if(isStr()) return [];
+      return cubsOf(v.b).map(c=>({id:c.id,col:colOf(v.b),poly:cubPoly(v.b,c),lab:cubLab(v.b,c),text:c.id,
+        title:`${LB.l2} ${cubName(v.b,c.id)}`,sub:LB.l2,aria:`${LB.l2} ${cubName(v.b,c.id)}${cn(c)?', '+cn(c):''}`,n:cn(c),
+        pct:()=>isDone(v.b,c.id,CAPA)?100:0,single:true,go:{lvl:2,b:v.b,c:c.id}})); }
+    const s=sheetOf(v); if(!s.mark) return [];
+    const c=s.mark; return [{id:'__mark',col:colOf(v.b),poly:cubPoly(v.b,c),lab:cubLab(v.b,c),text:c.id,mark:true,aria:''}];
+  }
   if(v.lvl===0) return DATA.buildings.map(b=>{const tp=T[b.tipo], tt=tipoTxt(b.tipo);
     const base=(LB.unit&&tp.panels!=null)?`${tp.panels} ${LB.unit}`:`${tp.cubs.length} ${LB.l2p.toLowerCase()}`;
     return {id:b.id,col:b.col||b.tipo,poly:b.poly,lab:b.lab,text:b.id,
@@ -421,25 +482,26 @@ function zonesOf(v){
 /* ---------- capa de un plano (imagen + zonas) ---------- */
 async function mkLayer(v){
   const s=sheetOf(v);
-  const el=document.createElement('div'); el.className='sheet lvl'+v.lvl; el.style.width=SW+'px'; el.style.height=SH+'px'; el.style.opacity=0;
+  const el=document.createElement('div'); el.className='sheet lvl'+v.lvl+(v.lvl===0&&CFG.marcos0?' marcos':''); el.style.width=SW+'px'; el.style.height=SH+'px'; el.style.opacity=0;
   const img=new Image(); img.alt=s.alt; img.draggable=false; img.src=s.url;
   await Promise.race([img.decode().catch(()=>{}),new Promise(r=>{img.addEventListener('load',r,{once:true});img.addEventListener('error',r,{once:true});}),new Promise(r=>setTimeout(r,6000))]);
   el.appendChild(img);
   const svg=document.createElementNS(NS,'svg'); svg.setAttribute('viewBox',`0 0 ${SW} ${SH}`);
   const zones={}, data=zonesOf(v);
   for(const z of data){
-    const g=document.createElementNS(NS,'g'); g.setAttribute('class','zone'); g.setAttribute('tabindex','0'); g.setAttribute('role','link');
-    g.setAttribute('aria-label',z.aria);
+    const g=document.createElementNS(NS,'g'); g.setAttribute('class','zone'+(z.mark?' mark':''));
+    if(!z.mark){ g.setAttribute('tabindex','0'); g.setAttribute('role','link'); g.setAttribute('aria-label',z.aria); } else g.setAttribute('aria-hidden','true');
     g.style.setProperty('--zc',`var(--t${z.col})`); g.style.setProperty('--zt',`var(--on-t${z.col})`);
     const p=document.createElementNS(NS,'polygon'); p.setAttribute('points',z.poly.map(q=>q.join(',')).join(' ')); g.appendChild(p);
     const tag=document.createElementNS(NS,'g'); tag.setAttribute('class','tag'); tag.style.setProperty('--lx',z.lab[0]+'px'); tag.style.setProperty('--ly',z.lab[1]+'px');
     const w=z.text.length*8+16; const r=document.createElementNS(NS,'rect'); r.setAttribute('x',-w/2); r.setAttribute('y',-10); r.setAttribute('width',w); r.setAttribute('height',20); r.setAttribute('rx',4);
     const tx=document.createElementNS(NS,'text'); tx.textContent=z.text; tag.append(r,tx);
-    if(z.pct){ // barra de avance bajo la etiqueta
+    if(z.pct&&!z.mark){ // barra de avance bajo la etiqueta
       const bg=document.createElementNS(NS,'rect'); bg.setAttribute('class','pgbg'); bg.setAttribute('x',-w/2); bg.setAttribute('y',13); bg.setAttribute('width',w); bg.setAttribute('height',5); bg.setAttribute('rx',2.5);
       const f=document.createElementNS(NS,'rect'); f.setAttribute('class','pgf'); f.setAttribute('x',-w/2); f.setAttribute('y',13); f.setAttribute('width',w*z.pct()/100); f.setAttribute('height',5); f.setAttribute('rx',2.5);
       tag.append(bg,f); }
     g.appendChild(tag);
+    if(z.mark){ svg.appendChild(g); continue; }
     const open=()=>{ if(!busy&&cur&&cur.el===el) go(z.go,'in',bboxOf(z.poly)); };
     g.addEventListener('click',open);
     g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
@@ -448,7 +510,7 @@ async function mkLayer(v){
     svg.appendChild(g); zones[z.id]=g;
   }
   el.appendChild(svg);
-  return {el,zones,data,cam:fitCam(),view:v};
+  const L={el,zones,data,view:v,focus:s.focus||null}; L.cam=homeCam(L); return L;
 }
 function hot(id,on){
   if(cur&&cur.zones[id]) cur.zones[id].classList.toggle('hot',on);
@@ -462,7 +524,7 @@ async function transition(nl,mode,bb){
   const old=cur; stage.insertBefore(nl.el,hint);
   if(!old){nl.el.style.opacity=1; apply(nl); cur=nl; return;}
   old.el.classList.add('inert'); nl.el.classList.add('inert');
-  const fit=fitCam(); nl.cam=fit; const c0={...old.cam};
+  const fit=homeCam(nl); nl.cam=fit; const c0={...old.cam};
   const small=c=>mix(c,{k:c.k*0.86,x:vw/2-(vw/2-c.x)*0.86,y:vh/2-(vh/2-c.y)*0.86},1);
   if(mode==='in'){
     const target=bboxCam(bb); const start=small(fit); nl.cam=start; apply(nl);
@@ -493,21 +555,22 @@ async function go(v,mode,bb){
 
 /* ---------- barra, migas y lista lateral ---------- */
 function bboxOfBuilding(id){return bboxOf(B[id].poly);}
-function bboxOfCub(v){const c=cubsOf(v.b).find(c=>c.id===v.c); return bboxOf(c.poly);}
+function bboxOfCub(v){const c=cubsOf(v.b).find(c=>c.id===v.c); return bboxOf(CAPAS?cubPoly(v.b,c):c.poly);}
 function updateBars(){ if(!cur||!CL.length) return;
   for(const z of cur.data){ const g=cur.zones[z.id]; if(!g||!z.pct) continue; const f=g.querySelector('.pgf'), bg=g.querySelector('.pgbg');
-    if(f&&bg) f.setAttribute('width',(+bg.getAttribute('width'))*z.pct()/100); } }
+    if(f&&bg) f.setAttribute('width',(+bg.getAttribute('width'))*z.pct()/100);
+    if(z.single) g.classList.toggle('done',z.pct()===100); } }
 function refreshProg(){ if(!view||busy) return; render(); updateBars(); }
 const fmtDate=s=>{ if(!s) return ''; const d=new Date(s.length<=10?s+'T12:00:00':s); return isNaN(d)?'':d.toLocaleDateString('es-ES',{day:'numeric',month:'short'}); };
 const fmtStamp=s=>{ const d=new Date(s); return isNaN(d)?'':d.toLocaleString('es-ES',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); };
 function up(){ if(!view||view.lvl===0) return; if(view.lvl===2) go({lvl:1,b:view.b},'out',bboxOfCub(view)); else go({lvl:0},'out',bboxOfBuilding(view.b)); }
 function render(){
-  const v=view, tipo=v.lvl?B[v.b].tipo:null, tt=v.lvl?tipoTxt(tipo):'';
+  const v=view, tipo=v.lvl?B[v.b].tipo:null, tt=v.lvl?bTxt(v.b):'';
   const bLabel=v.lvl?`${LB.l1} ${v.b}${tt?' · '+tt:''}`:'';
   backBtn.disabled=v.lvl===0;
   const items=[[LB.l0,v.lvl>0&&(()=>go({lvl:0},'out',bboxOfBuilding(v.b)))]];
   if(v.lvl>=1) items.push([bLabel,v.lvl>1&&(()=>go({lvl:1,b:v.b},'out',bboxOfCub(v)))]);
-  if(v.lvl===2) items.push([`${LB.l2} ${v.c}`,false]);
+  if(v.lvl===2) items.push([`${LB.l2} ${cubName(v.b,v.c)}`,false]);
   crumbs.replaceChildren(...items.map(([txt,fn])=>{const li=document.createElement('li');
     if(fn){const b=document.createElement('button'); b.textContent=txt; b.addEventListener('click',fn); li.appendChild(b);}
     else{const s=document.createElement('span'); s.textContent=txt; s.setAttribute('aria-current','page'); li.appendChild(s);} return li;}));
@@ -516,22 +579,27 @@ function render(){
   const head=document.createElement('header'); const ey=document.createElement('div'); ey.className='eyebrow';
   const h=document.createElement('h2'); const p=document.createElement('p');
   if(v.lvl===0){ey.textContent='Nivel 1 de 3';h.textContent=LB.l0;
-    p.textContent=`${DATA.buildings.length} ${LB.l1p.toLowerCase()}${KIND==='electrica'?'':' · '+Object.keys(T).length+' tipos'}. ${LB.intro0}`;}
-  else if(v.lvl===1){ey.textContent='Nivel 2 de 3';h.textContent=`${LB.l1} ${v.b}`;const tp=T[tipo];
-    p.textContent=join(tt,`${tp.cubs.length} ${LB.l2p.toLowerCase()}`,(LB.unit&&tp.panels!=null)?`${tp.panels} ${LB.unit}`:'');}
-  else{ey.textContent='Nivel 3 de 3';h.textContent=`${LB.l2} ${v.c}`;const c=cubsOf(v.b).find(c=>c.id===v.c);
+    const neds=new Set(DATA.buildings.map(b=>b.ed).filter(Boolean)).size;
+    p.textContent=`${DATA.buildings.length} ${LB.l1p.toLowerCase()}${neds?' · '+neds+' edificios':(KIND==='electrica'||!Object.keys(T).length)?'':' · '+Object.keys(T).length+' tipos'}. ${LB.intro0}`;}
+  else if(v.lvl===1){ey.textContent='Nivel 2 de 3';h.textContent=`${LB.l1} ${v.b}`;const np=bPanels(v.b);
+    p.textContent=isStr()?join(tt,`${strsOf(v.b).length} strings en este plano`):join(tt,`${cubsOf(v.b).length} ${LB.l2p.toLowerCase()}`,(LB.unit&&np!=null)?`${np} ${LB.unit}`:'');}
+  else{ey.textContent='Nivel 3 de 3';h.textContent=`${LB.l2} ${cubName(v.b,v.c)}`;const c=cubsOf(v.b).find(c=>c.id===v.c);
     p.textContent=join(`${LB.l1} ${v.b}`,tt,cn(c));}
   head.append(ey,h,p);
   const ul=document.createElement('ul'); ul.className='list';
-  const rows=v.lvl===2?cubsOf(v.b).map(c=>({id:c.id,col:colOf(v.b),title:`${LB.l2} ${c.id}`,sub:LB.l2,n:cn(c),pct:CL.length?()=>pctZ(v.b,c.id):null,go:{lvl:2,b:v.b,c:c.id}})):cur.data;
+  const cubPct=c=>CAPAS?()=>isDone(v.b,c.id,CAPA)?100:0:CL.length?()=>pctZ(v.b,c.id):null;
+  const rows=(CAPAS&&v.lvl===1&&isStr())?strsOf(v.b).map(s=>{const i=strInfo(edOf(v.b),s); return {id:s,col:colOf(v.b),title:`String ${s}`,sub:`${edOf(v.b)} · String`,n:i.n?`${i.n} ${LB.unit}`:'',
+      pct:()=>isDone(edOf(v.b),s,SCHK)?100:0,single:true};})
+    :v.lvl===2?cubsOf(v.b).map(c=>({id:c.id,col:colOf(v.b),title:`${LB.l2} ${c.id}`,sub:LB.l2,n:cn(c),pct:cubPct(c),single:!!CAPAS,go:{lvl:2,b:v.b,c:c.id}})):cur.data;
+  const pctTxt=r=>!r.pct?'':r.single?(r.pct()===100?'✓':''):r.pct()+'%';
   for(const r of rows){
     const li=document.createElement('li'); const b=document.createElement('button'); b.className='item'; b.dataset.id=r.id;
     b.style.setProperty('--zc',`var(--t${r.col})`);
     if(v.lvl===2&&r.id===v.c) b.setAttribute('aria-current','true');
     b.innerHTML='<span class="sw"></span><span class="id"></span><span class="meta"></span><span class="n"></span>';
-    b.children[1].textContent=r.id; b.children[2].textContent=r.sub; b.children[3].textContent=join(r.n,r.pct?r.pct()+'%':'');
+    b.children[1].textContent=r.id; b.children[2].textContent=r.sub; b.children[3].textContent=join(r.n,pctTxt(r));
     b.addEventListener('mouseenter',()=>hot(r.id,true)); b.addEventListener('mouseleave',()=>hot(r.id,false));
-    b.addEventListener('click',()=>{ if(busy) return; if(v.lvl===2){ if(r.id!==v.c) go(r.go,'swap'); } else go(r.go,'in',bboxOf(cur.data.find(z=>z.id===r.id).poly)); });
+    b.addEventListener('click',()=>{ if(busy||!r.go) return; if(v.lvl===2){ if(r.id!==v.c) go(r.go,'swap'); } else go(r.go,'in',bboxOf(cur.data.find(z=>z.id===r.id).poly)); });
     li.appendChild(b); ul.appendChild(li);
   }
   side.replaceChildren(head,ul);
@@ -565,18 +633,34 @@ function renderChecks(){
   const p=document.createElement('p'); const bar=document.createElement('div'); bar.className='cbar'; const fill=document.createElement('i'); bar.appendChild(fill);
   const body=document.createElement('ul'); body.className='cl';
   let pct;
-  if(v.lvl===2){
+  const chkRow=(zb,zc,id,label,isCur)=>{
+    const s=zst(zb,zc)[id]||{}, d=!!s.done;
+    const li=document.createElement('li'); const edit=CAN(); const el=document.createElement(edit?'button':'div'); el.className='chk'+(isCur?' cur':'');
+    el.setAttribute('role','checkbox'); el.setAttribute('aria-checked',d); if(edit){ el.type='button'; el.addEventListener('click',()=>toggleCheck(zb,zc,id)); } else el.setAttribute('aria-readonly','true');
+    const box=document.createElement('span'); box.className='box'; box.innerHTML=ICON_OK;
+    const tx=document.createElement('span'); const l=document.createElement('span'); l.className='lbl'; l.textContent=label; tx.appendChild(l);
+    const meta=isPend(zb,zc,id)?'Sin enviar':(d?(CAPAS?join(s.date?'Completado el '+fmtDate(s.date):'Completado',s.by):join(s.by,fmtDate(s.date))):''); if(meta){ const w=document.createElement('span'); w.className='who'; w.textContent=meta; tx.appendChild(w); }
+    el.append(box,tx); li.appendChild(el); body.appendChild(li);
+  };
+  const aggRow=(label,dn,n,cur_)=>{
+    const li=document.createElement('li'); li.className='ag';
+    const r=document.createElement('div'); r.className='row'; const t=document.createElement('span'); t.textContent=label; if(cur_) t.style.color='var(--accent)'; const c=document.createElement('b'); c.textContent=`${dn}/${n}`; r.append(t,c);
+    const b=document.createElement('div'); b.className='cbar'; const f=document.createElement('i'); f.style.width=(n?100*dn/n:0)+'%'; b.appendChild(f);
+    li.append(r,b); body.appendChild(li);
+  };
+  if(CAPAS&&v.lvl===1&&isStr()){
+    const e=edOf(v.b), ss=strsOf(v.b), dn=ss.filter(s=>isDone(e,s,SCHK)).length; pct=ss.length?Math.round(100*dn/ss.length):0;
+    ey.textContent='Strings'; h.textContent=`${LB.l1} ${v.b}`; cnt.textContent=`${dn}/${ss.length}`; p.textContent=`${bTxt(v.b)} · strings de este plano`;
+    for(const s of ss){ const i=strInfo(e,s); chkRow(e,s,SCHK,`String ${s}${i.n?` (${i.n})`:''}`,false); }
+  } else if(v.lvl===2){
     const done=zdone(v.b,v.c); pct=pctZ(v.b,v.c);
-    ey.textContent='Checklist del día'; h.textContent=`${LB.l2} ${v.c}`; cnt.textContent=`${done}/${CL.length}`; p.textContent=`${LB.l1} ${v.b}`;
-    for(const k of CL){
-      const s=zst(v.b,v.c)[k.id]||{}, d=!!s.done;
-      const li=document.createElement('li'); const edit=CAN(); const el=document.createElement(edit?'button':'div'); el.className='chk';
-      el.setAttribute('role','checkbox'); el.setAttribute('aria-checked',d); if(edit){ el.type='button'; el.addEventListener('click',()=>toggleCheck(v.b,v.c,k.id)); } else el.setAttribute('aria-readonly','true');
-      const box=document.createElement('span'); box.className='box'; box.innerHTML=ICON_OK;
-      const tx=document.createElement('span'); const l=document.createElement('span'); l.className='lbl'; l.textContent=k.label; tx.appendChild(l);
-      const meta=isPend(v.b,v.c,k.id)?'Sin enviar':(d?join(s.by,fmtDate(s.date)):''); if(meta){ const w=document.createElement('span'); w.className='who'; w.textContent=meta; tx.appendChild(w); }
-      el.append(box,tx); li.appendChild(el); body.appendChild(li);
-    }
+    ey.textContent=CAPAS?'Completado':'Checklist del día'; h.textContent=`${LB.l2} ${cubName(v.b,v.c)}`; cnt.textContent=`${done}/${CL.length}`; p.textContent=`${LB.l1} ${v.b}`;
+    for(const k of CL) chkRow(v.b,v.c,k.id,k.label,CAPAS&&k.id===CAPA);
+  } else if(CAPAS){
+    const blocks=v.lvl===0?DATA.buildings.map(b=>b.id):[v.b], a=capaAgg(CAPA,blocks); pct=a.pct;
+    ey.textContent='Avance de obra'; h.textContent=v.lvl===0?'Total de la obra':`${LB.l1} ${v.b}`; cnt.textContent=a.pct+'%';
+    p.textContent=`${capaOf(CAPA).label}: ${a.d} de ${a.n} ${a.unit}`;
+    for(const c of CAPAS){ const x=capaAgg(c.id,blocks); aggRow(`${c.label} (${x.unit})`,x.d,x.n,c.id===CAPA); }
   } else {
     const list=v.lvl===0?allZones():bZones(v.b), a=agg(list); pct=a.pct;
     ey.textContent='Avance de obra'; h.textContent=v.lvl===0?'Total de la obra':`${LB.l1} ${v.b}`; cnt.textContent=a.pct+'%';
@@ -611,8 +695,8 @@ fstog.addEventListener('click',()=>{ const o=fsnav.classList.toggle('open'); fst
 fsback.addEventListener('click',()=>{ fsnav.classList.remove('open'); fstog.setAttribute('aria-expanded',false); up(); });
 function buildNav(v,tipo,rows){
   fsback.disabled=v.lvl===0;
-  const tt=tipo!=null?tipoTxt(tipo):'';
-  fstxt.textContent=v.lvl===0?LB.l0:v.lvl===1?join(`${LB.l1} ${v.b}`,tt):`${LB.l1} ${v.b} · ${LB.l2} ${v.c}`;
+  const tt=v.lvl?bTxt(v.b):'';
+  fstxt.textContent=v.lvl===0?LB.l0:v.lvl===1?join(`${LB.l1} ${v.b}`,tt):`${LB.l2} ${cubName(v.b,v.c)}`;
   const close=()=>{ fsnav.classList.remove('open'); fstog.setAttribute('aria-expanded',false); };
   const row=(label,meta,color,fn,cur)=>{ const b=document.createElement('button'); const i=document.createElement('i'); if(color) i.style.setProperty('--zc',color);
     const l=document.createElement('span'); l.textContent=label; const m=document.createElement('small'); m.textContent=meta||'';
@@ -621,9 +705,10 @@ function buildNav(v,tipo,rows){
   if(v.lvl>0){ const h=document.createElement('h3'); h.textContent='Subir a'; out.push(h);
     out.push(row(LB.l0,'',null,()=>{close(); go({lvl:0},'out',bboxOfBuilding(v.b));}));
     if(v.lvl===2) out.push(row(join(`${LB.l1} ${v.b}`,tt),'',`var(--t${colOf(v.b)})`,()=>{close(); go({lvl:1,b:v.b},'out',bboxOfCub(v));})); }
-  const h2=document.createElement('h3'); h2.textContent=v.lvl===0?LB.l1p:LB.l2p; out.push(h2);
+  const h2=document.createElement('h3'); h2.textContent=v.lvl===0?LB.l1p:(CAPAS&&isStr()&&v.lvl===1)?'Strings':LB.l2p; out.push(h2);
   for(const r of rows){ const col=`var(--t${r.col})`;
-    out.push(row(v.lvl===0?`${LB.l1} ${r.id}`:`${LB.l2} ${r.id}`, join(r.n,r.pct?r.pct()+'%':''), col, ()=>{
+    out.push(row(v.lvl===0?`${LB.l1} ${r.id}`:r.title||`${LB.l2} ${r.id}`, join(r.n,!r.pct?'':r.single?(r.pct()===100?'✓':''):r.pct()+'%'), col, ()=>{
+      if(!r.go) return;
       if(v.lvl===2){ if(r.id!==v.c) go(r.go,'swap'); }
       else { close(); go(r.go,'in',bboxOf(cur.data.find(z=>z.id===r.id).poly)); } }, v.lvl===2&&r.id===v.c)); }
   fsmenu.replaceChildren(...out);
@@ -633,7 +718,7 @@ backBtn.addEventListener('click',up);
 
 /* ---------- zoom y desplazamiento ---------- */
 const ptrs=new Map(); let pan=null, pinch=null, moved=0;
-const limits=()=>{const f=fitCam().k; return [f*0.8,f*10];};
+const limits=()=>{const f=fitCam().k; return [f*0.8,Math.max(f*10,cur&&cur.focus?homeCam(cur).k*3:0)];};
 function clampCam(c){const [lo,hi]=limits(); c.k=Math.min(hi,Math.max(lo,c.k));
   c.x=Math.min(vw*0.85,Math.max(vw*0.15-SW*c.k,c.x)); c.y=Math.min(vh*0.85,Math.max(vh*0.15-SH*c.k,c.y)); return c;}
 function zoomAt(px,py,f){ if(!cur||busy) return; const c=cur.cam; const [lo,hi]=limits(); const k=Math.min(hi,Math.max(lo,c.k*f)); const r=k/c.k;
@@ -658,12 +743,12 @@ stage.addEventListener('pointerup',endPtr); stage.addEventListener('pointercance
 stage.addEventListener('dblclick',e=>{ if(e.target.closest&&e.target.closest('.zone')||e.target.closest('.ctl')) return; const r=stage.getBoundingClientRect(); zoomAt(e.clientX-r.left,e.clientY-r.top,2); });
 document.getElementById('zin').addEventListener('click',()=>zoomAt(vw/2,vh/2,1.5));
 document.getElementById('zout').addEventListener('click',()=>zoomAt(vw/2,vh/2,1/1.5));
-document.getElementById('zfit').addEventListener('click',()=>animateTo(fitCam()));
+document.getElementById('zfit').addEventListener('click',()=>animateTo(homeCam(cur)));
 addEventListener('keydown',e=>{
   if(e.target.closest&&e.target.closest('input,textarea')) return;
   if(e.key==='Escape'||e.key==='Backspace'){ if(view&&view.lvl>0){e.preventDefault();up();} }
   else if(e.key==='ArrowRight') step(1); else if(e.key==='ArrowLeft') step(-1);
-  else if(e.key==='+'||e.key==='=') zoomAt(vw/2,vh/2,1.4); else if(e.key==='-') zoomAt(vw/2,vh/2,1/1.4); else if(e.key==='0') animateTo(fitCam());
+  else if(e.key==='+'||e.key==='=') zoomAt(vw/2,vh/2,1.4); else if(e.key==='-') zoomAt(vw/2,vh/2,1/1.4); else if(e.key==='0') animateTo(homeCam(cur));
 });
 (function(){
   const app=document.querySelector('.app'), ptog=document.getElementById('ptog'), ptxt=document.getElementById('ptxt'), zfs=document.getElementById('zfs');
@@ -702,22 +787,37 @@ addEventListener('keydown',e=>{
   zfs.addEventListener('click',toggleFs);
   addEventListener('keydown',e=>{ if(e.key==='f'||e.key==='F'){ if(!e.ctrlKey&&!e.metaKey&&!e.altKey) toggleFs(); } else if(e.key==='Escape'&&stage.classList.contains('pfs')) setPfs(false); });
 })();
-new ResizeObserver(()=>{ const f0=cur?fitCam().k:0; const old=vw; measure(); if(cur&&!busy){ const wasFit=old&&Math.abs(cur.cam.k-f0)<1e-6; if(wasFit||!old) {cur.cam=fitCam(); apply(cur);} } }).observe(stage);
+new ResizeObserver(()=>{ const f0=cur?homeCam(cur).k:0; const old=vw; measure(); if(cur&&!busy){ const wasFit=old&&Math.abs(cur.cam.k-f0)<1e-6; if(wasFit||!old) {cur.cam=homeCam(cur); apply(cur);} } }).observe(stage);
 
 /* ---------- arranque ---------- */
-function preload(){ const seen=new Set(); const q=[]; const t=view.lvl?B[view.b].tipo:null;
-  DATA.buildings.forEach(b=>q.push((b.img||`img/edif_${b.tipo}.webp`)+IV)); if(t) T[t].cubs.forEach(c=>q.push(detailUrl(t,c)));
+function preload(){ const seen=new Set(); const q=[];
+  DATA.buildings.forEach(b=>q.push(sheetOf({lvl:1,b:b.id}).url)); if(view.lvl&&!(CAPAS&&isStr())) cubsOf(view.b).forEach(c=>q.push(sheetOf({lvl:2,b:view.b,c:c.id}).url));
   const go_=()=>{const u=q.shift(); if(!u) return; if(!seen.has(u)){seen.add(u); const i=new Image(); i.onload=i.onerror=()=>setTimeout(go_,60); i.src=u;} else go_();};
   if(window.requestIdleCallback) requestIdleCallback(go_,{timeout:1500}); else setTimeout(go_,400); }
-function fromHash(){ const h=decodeURIComponent(location.hash.slice(1)); const m=h.match(/^e([^_]+)(?:_c(.+))?$/); if(m&&B[m[1]]){
-  if(m[2]&&cubsOf(m[1]).some(c=>c.id===m[2])) return {lvl:2,b:m[1],c:m[2]}; return {lvl:1,b:m[1]}; } return {lvl:0}; }
+function fromHash(){ let h=decodeURIComponent(location.hash.slice(1));
+  if(CAPAS){ const i=h.indexOf('~'); if(i>=0){ const c=h.slice(i+1); if(capaOf(c)) CAPA=c; h=h.slice(0,i); } }
+  const m=h.match(/^e([^_]+)(?:_c(.+))?$/); if(m&&B[m[1]]){
+  if(m[2]&&!(CAPAS&&isStr())&&cubsOf(m[1]).some(c=>c.id===m[2])) return {lvl:2,b:m[1],c:m[2]}; return {lvl:1,b:m[1]}; } return {lvl:0}; }
+/* selector de capa */
+const capasEl=document.getElementById('capas');
+['pointerdown','pointerup','dblclick','wheel','click'].forEach(t=>capasEl.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
+function syncCapas(){ for(const b of capasEl.children) b.setAttribute('aria-checked',b.dataset.id===CAPA); }
+function setCapa(id){
+  if(busy||id===CAPA||!view) return; CAPA=id; syncCapas();
+  let v=view; if(isStr()&&v.lvl===2) v={lvl:1,b:v.b};
+  if(v.lvl===0){ render(); updateBars(); return; }
+  go(v,'swap');
+}
+if(CAPAS){ capasEl.hidden=false;
+  for(const c of CAPAS){ const b=document.createElement('button'); b.type='button'; b.setAttribute('role','radio'); b.dataset.id=c.id; b.textContent=c.label; b.addEventListener('click',()=>setCapa(c.id)); capasEl.appendChild(b); }
+  syncCapas(); }
 if(CFG.title) document.title=CFG.title;
 if(CFG.site){ const s=document.querySelector('.site'); const b=document.createElement('b'); b.textContent=CFG.site.name||''; s.replaceChildren(b,document.createTextNode(CFG.site.sub||'')); }
 measure();
 (async()=>{
   const p=loadProgress();                       // el avance no debe retrasar el arranque más de 2,5 s
   await Promise.race([p,new Promise(r=>setTimeout(r,2500))]);
-  await go(fromHash(),'swap');
+  const v0=fromHash(); if(CAPAS) syncCapas(); await go(v0,'swap');
   p.then(()=>{ refreshProg(); });
   if(WRITE){ flushQ(); setInterval(flushQ,20000); addEventListener('online',flushQ); document.addEventListener('visibilitychange',()=>{ if(!document.hidden) flushQ(); }); }
   if(CL.length&&CFG.progressUrl){
