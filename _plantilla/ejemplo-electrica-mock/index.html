@@ -328,8 +328,9 @@ const cubsOf=b=>B[b].cubs||T[B[b].tipo].cubs;
    (hojas[capa].img y, si la hoja no es la de estructura, hojas[capa].tf = [escala, dx, dy] para llevar las zonas a esa hoja). */
 const CAPAS=Array.isArray(CFG.capas)&&CFG.capas.length?CFG.capas:null;
 const capaOf=id=>CAPAS&&CAPAS.find(c=>c.id===id);
+const conPlano=c=>c&&c.plano!==false;                 // capas con plano propio (salen en el selector); plano:false = solo check
 const STRC=CAPAS?CAPAS.find(c=>c.nivel==='string'):null;
-let CAPA=CAPAS?CAPAS[0].id:null;
+let CAPA=CAPAS?CAPAS.find(conPlano).id:null;
 const isStr=()=>!!(STRC&&CAPA===STRC.id);
 const SCHK='string';                                         // id del check de cada string
 const edOf=b=>B[b].ed||b;
@@ -628,6 +629,7 @@ function renderChecks(){
   if(!CL.length||!view){ checks.hidden=true; cpill.hidden=true; return; }
   checks.hidden=false; cpill.hidden=false;
   const v=view, open=checks.classList.contains('open');
+  const uds=(k,c)=>k.porPanel&&c&&c.n?` (${c.n})`:'';
   const head=document.createElement('button'); head.type='button'; head.className='chead'; head.setAttribute('aria-expanded',open);
   const ey=document.createElement('div'); ey.className='eyebrow';
   const row=document.createElement('div'); row.className='row'; const h=document.createElement('h2'); const cnt=document.createElement('span'); cnt.className='cnt';
@@ -656,7 +658,8 @@ function renderChecks(){
   } else if(v.lvl===2){
     const done=zdone(v.b,v.c); pct=pctZ(v.b,v.c);
     ey.textContent=CAPAS?'Completado':'Checklist del día'; h.textContent=`${LB.l2} ${cubName(v.b,v.c)}`; cnt.textContent=`${done}/${CL.length}`; p.textContent=`${LB.l1} ${v.b}`;
-    for(const k of CL) chkRow(v.b,v.c,k.id,k.label,CAPAS&&k.id===CAPA);
+    const cb=cubsOf(v.b).find(c=>c.id===v.c);
+    for(const k of CL) chkRow(v.b,v.c,k.id,k.label+uds(k,cb),CAPAS&&k.id===CAPA);
   } else if(CAPAS){
     const blocks=v.lvl===0?DATA.buildings.map(b=>b.id):[v.b], a=capaAgg(CAPA,blocks); pct=a.pct;
     ey.textContent='Avance de obra'; h.textContent=v.lvl===0?'Total de la obra':`${LB.l1} ${v.b}`; cnt.textContent=a.pct+'%';
@@ -796,7 +799,7 @@ function preload(){ const seen=new Set(); const q=[];
   const go_=()=>{const u=q.shift(); if(!u) return; if(!seen.has(u)){seen.add(u); const i=new Image(); i.onload=i.onerror=()=>setTimeout(go_,60); i.src=u;} else go_();};
   if(window.requestIdleCallback) requestIdleCallback(go_,{timeout:1500}); else setTimeout(go_,400); }
 function fromHash(){ let h=decodeURIComponent(location.hash.slice(1));
-  if(CAPAS){ const i=h.indexOf('~'); if(i>=0){ const c=h.slice(i+1); if(capaOf(c)) CAPA=c; h=h.slice(0,i); } }
+  if(CAPAS){ const i=h.indexOf('~'); if(i>=0){ const c=h.slice(i+1); if(conPlano(capaOf(c))) CAPA=c; h=h.slice(0,i); } }
   const m=h.match(/^e([^_]+)(?:_c(.+))?$/); if(m&&B[m[1]]){
   if(m[2]&&!(CAPAS&&isStr())&&cubsOf(m[1]).some(c=>c.id===m[2])) return {lvl:2,b:m[1],c:m[2]}; return {lvl:1,b:m[1]}; } return {lvl:0}; }
 /* selector de capa */
@@ -810,7 +813,7 @@ function setCapa(id){
   go(v,'swap');
 }
 if(CAPAS){ capasEl.hidden=false;
-  for(const c of CAPAS){ const b=document.createElement('button'); b.type='button'; b.setAttribute('role','radio'); b.dataset.id=c.id; b.textContent=c.label; b.addEventListener('click',()=>setCapa(c.id)); capasEl.appendChild(b); }
+  for(const c of CAPAS.filter(conPlano)){ const b=document.createElement('button'); b.type='button'; b.setAttribute('role','radio'); b.dataset.id=c.id; b.textContent=c.label; b.addEventListener('click',()=>setCapa(c.id)); capasEl.appendChild(b); }
   syncCapas(); }
 if(CFG.title) document.title=CFG.title;
 if(CFG.site){ const s=document.querySelector('.site'); const b=document.createElement('b'); b.textContent=CFG.site.name||''; s.replaceChildren(b,document.createTextNode(CFG.site.sub||'')); }

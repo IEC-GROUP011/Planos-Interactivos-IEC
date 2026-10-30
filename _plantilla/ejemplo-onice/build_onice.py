@@ -93,7 +93,7 @@ right=Polygon([c+nrm,c-nrm,c-nrm+ax*400,c+nrm+ax*400]); left=Polygon([c+nrm,c-nr
 G['E3-1']=R.intersection(right); G['E3-2']=R.intersection(left)
 data={'cfg':{'kind':'fotovoltaica','title':'Visor de planos Ónice','site':{'name':'Calle Ónice','sub':'Málaga · Autoconsumo FV'},
   'obraId':'ONICE','modo':'demo','imgV':'20261030','marcos0':True,
-  'capas':[{'id':'estructura','label':'Estructura','nivel':'cubierta'},{'id':'paneles','label':'Paneles','nivel':'cubierta'},{'id':'strings','label':'Strings','nivel':'string'}],
+  'capas':[{'id':'estructura','label':'Estructura','nivel':'cubierta'},{'id':'paneles','label':'Paneles','nivel':'cubierta'},{'id':'optimizadores','label':'Optimizadores','nivel':'cubierta','plano':False,'porPanel':True},{'id':'strings','label':'Strings','nivel':'string'}],
   'alt0':'Implantación con los 4 edificios divididos en 7 bloques'},
   'buildings':[],'strings':{e:[{'id':k,'n':v} for k,v in sorted(m.items(),key=lambda kv:int(kv[0][1:]))] for e,m in strings.items()}}
 names=[]

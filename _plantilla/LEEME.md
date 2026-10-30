@@ -45,6 +45,7 @@ Cuando el PDF trae varios juegos de planos del mismo bloque, `cfg.capas` añade 
 - Nivel cubierta: si la cubierta tiene `det[capa]`, se ve ese plano de detalle; si no, la hoja del bloque ampliada sobre la cubierta.
 - Checks: un único «Completado» (con fecha y quién) por capa de nivel `cubierta`, con clave `<bloque>/<cubierta>` y check `<id de capa>` (p. ej. `E1-1/3` + `estructura`). Las capas de nivel `string` se marcan por string en el nivel del bloque, con clave `<edificio>/<string>` y check `string` (p. ej. `E1/S4`); un string que aparece en dos bloques es el mismo check.
 - `build_visor.py` genera `cfg.checklist` a partir de las capas de nivel `cubierta`.
+- Una capa con `"plano": false` es solo un check (no sale en el selector), p. ej. `{"id": "optimizadores", "label": "Optimizadores", "nivel": "cubierta", "plano": false, "porPanel": true}`. `porPanel` muestra las unidades de la cubierta (una por panel).
 - `marcos0`: dibuja el contorno de cada bloque en la implantación (cuando se han quitado los contornos de color del PDF).
 - Enlaces profundos con capa: `#eE1-1_c3~paneles`.
 
