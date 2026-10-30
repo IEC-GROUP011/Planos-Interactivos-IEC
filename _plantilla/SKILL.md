@@ -31,7 +31,7 @@ Repositorio GitHub `IEC-GROUP011/Planos-Interactivos-IEC` (si no está en la ses
 - `_plantilla/build_visor.py`: `python3 _plantilla/build_visor.py <carpeta>` genera `<carpeta>/index.html` desde `<carpeta>/data.json` e inyecta el checklist.
 - `_plantilla/checklists.json`: checklists por tipo. `_plantilla/ESPECIFICACION_APP_IEC.md`: tabla de Airtable, lectura del avance y aviso diario. `_plantilla/LEEME.md`: formato de `data.json`.
 - `_plantilla/ejemplo-onice/` (FV real) y `_plantilla/ejemplo-electrica-mock/` (eléctrica con planos inventados; `build_mock.py` lo regenera).
-- Cada proyecto va en su carpeta (`onice/`, …) y se enlaza desde el `index.html` de la portada.
+- Cada proyecto va en su carpeta (`onice/`, `onice-v2/`, …) y se enlaza desde el `index.html` de la portada.
 URL base: https://iec-group011.github.io/Planos-Interactivos-IEC/<carpeta>/
 
 ## Método
