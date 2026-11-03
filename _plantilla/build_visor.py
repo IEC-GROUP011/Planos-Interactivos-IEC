@@ -23,9 +23,9 @@ def main(carpeta: str) -> None:
 
     if cfg.get("capas"):
         # proyectos con capas (Estructura / Paneles / Strings): un único check «completado» por capa y cubierta;
-        # las capas de nivel "string" se marcan por string, no por cubierta
+        # las capas de nivel "string", "edificio" u "obra" se marcan por string, por edificio o una vez, no por cubierta
         cfg["checklist"] = [{"id": c["id"], "label": c["label"], **({"porPanel": True} if c.get("porPanel") else {})}
-                            for c in cfg["capas"] if c.get("nivel") != "string"]
+                            for c in cfg["capas"] if c.get("nivel") not in ("string", "edificio", "obra")]
         cfg["checklistProvisional"] = False
     elif "checklist" not in cfg and cfg.get("checklist") is not False:
         cl = json.loads((AQUI / "checklists.json").read_text(encoding="utf-8"))[kind]
