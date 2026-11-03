@@ -9,7 +9,7 @@
 :root{
   --bg:#EEF0F3; --surface:#FFFFFF; --ink:#14202B; --muted:#586878; --line:#D2D8DE;
   --stage:#D8DDE3; --accent:#0F5789; --accent-ink:#FFFFFF; --hot:rgba(15,87,137,.10);
-  --t1:#2776BB; --t2:#129C47; --t3:#E5242A; --t4:#E4C400;
+  --t1:#2776BB; --t2:#129C47; --t3:#E5242A; --t4:#E4C400; --t5:#8A4FBF;
   --on-t1:#FFFFFF; --on-t2:#FFFFFF; --on-t3:#FFFFFF; --on-t4:#2B2500;
   --ok:#1E8A4C; --on-ok:#FFFFFF;
   --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -312,6 +312,7 @@ const T=DATA.tipos||{};
 /* ---------- configuración por tipo de instalación ---------- */
 const CFG=DATA.cfg||{};
 const KIND=CFG.kind||'fotovoltaica';               // 'fotovoltaica' | 'electrica'
+const bN=id=>(B[id]&&B[id].nm)?B[id].nm:`${LB.l1} ${id}`;   // nombre visible (cfg opcional nm por planta)
 const LB=Object.assign(KIND==='electrica'
   ?{l0:'Plano general',l1:'Planta',l1p:'Plantas',l2:'Estancia',l2p:'Estancias',a1:'una planta',a2:'una estancia',unit:'',intro0:'Cada color es una planta.'}
   :{l0:'Implantación',l1:'Edificio',l1p:'Edificios',l2:'Cubierta',l2p:'Cubiertas',a1:'un edificio',a2:'una cubierta',unit:'paneles',intro0:'Cada color es un tipo de edificio.'},CFG.labels||{});
@@ -365,14 +366,16 @@ let PROG={zones:{},updated:null,error:false};
 const PKEY=(b,c)=>b+'/'+c;
 const zst=(b,c)=>PROG.zones[PKEY(b,c)]||{};
 const isDone=(b,c,k)=>{const s=zst(b,c)[k]; return !!(s&&s.done);};
-const zdone=(b,c)=>CL.reduce((n,k)=>n+(isDone(b,c,k.id)?1:0),0);
-const pctZ=(b,c)=>CL.length?Math.round(100*zdone(b,c)/CL.length):0;
+const CLz=(b,c)=>CL.filter(k=>!k.soloEn||k.soloEn.includes(b+'/'+c));   // checks de la zona (soloEn: solo en esas zonas, p. ej. el cuadro eléctrico)
+const zdone=(b,c)=>CLz(b,c).reduce((n,k)=>n+(isDone(b,c,k.id)?1:0),0);
+const pctZ=(b,c)=>{const n=CLz(b,c).length; return n?Math.round(100*zdone(b,c)/n):0;};
 const bZones=b=>cubsOf(b).map(c=>[b,c.id]);
 const allZones=()=>DATA.buildings.flatMap(b=>bZones(b.id));
 function agg(list){
-  const per=CL.map(k=>({k,d:0})); let done=0;
-  for(const [b,c] of list) per.forEach(p=>{ if(isDone(b,c,p.k.id)){p.d++;done++;} });
-  const max=list.length*CL.length;
+  const per=CL.map(k=>({k,d:0,n:0})); let done=0;
+  for(const [b,c] of list) per.forEach(p=>{ if(p.k.soloEn&&!p.k.soloEn.includes(b+'/'+c)) return; p.n++; if(isDone(b,c,p.k.id)){p.d++;done++;} });
+  const max=per.reduce((a,p)=>a+p.n,0);
+  for(let i=per.length-1;i>=0;i--) if(!per[i].n) per.splice(i,1);
   return {n:list.length,per,done,max,pct:max?Math.round(100*done/max):0};
 }
 function capaAgg(id,blocks){
@@ -477,8 +480,8 @@ function zonesOf(v){
   const hasP=CL.length>0;
   if(CAPAS){
     if(v.lvl===0) return DATA.buildings.map(b=>{const np=bPanels(b.id), base=np!=null?`${np} ${LB.unit}`:`${cubsOf(b.id).length} ${LB.l2p.toLowerCase()}`;
-      return {id:b.id,col:colOf(b.id),poly:b.poly,lab:b.lab,text:b.id,title:`${LB.l1} ${b.id}`,sub:bTxt(b.id),
-        aria:`${LB.l1} ${b.id}, ${join(bTxt(b.id),base)}`.replace(/ · /g,', '),n:base,pct:()=>capaAgg(CAPA,[b.id]).pct,go:{lvl:1,b:b.id}};});
+      return {id:b.id,col:colOf(b.id),poly:b.poly,lab:b.lab,text:b.nm||b.id,title:`${bN(b.id)}`,sub:bTxt(b.id),
+        aria:`${bN(b.id)}, ${join(bTxt(b.id),base)}`.replace(/ · /g,', '),n:base,pct:()=>capaAgg(CAPA,[b.id]).pct,go:{lvl:1,b:b.id}};});
     if(v.lvl===1){ if(isStr()) return [];
       return cubsOf(v.b).map(c=>({id:c.id,col:colOf(v.b),poly:cubPoly(v.b,c),lab:cubLab(v.b,c),text:c.id,
         title:`${LB.l2} ${cubName(v.b,c.id)}`,sub:LB.l2,aria:`${LB.l2} ${cubName(v.b,c.id)}${cn(c)?', '+cn(c):''}`,n:cn(c),
@@ -488,8 +491,8 @@ function zonesOf(v){
   }
   if(v.lvl===0) return DATA.buildings.map(b=>{const tp=T[b.tipo], tt=tipoTxt(b.tipo);
     const base=(LB.unit&&tp.panels!=null)?`${tp.panels} ${LB.unit}`:`${tp.cubs.length} ${LB.l2p.toLowerCase()}`;
-    return {id:b.id,col:b.col||b.tipo,poly:b.poly,lab:b.lab,text:b.id,
-      title:`${LB.l1} ${b.id}`,sub:tt,aria:`${LB.l1} ${b.id}, ${join(tt,base)}`.replace(/ · /g,', '),n:base,
+    return {id:b.id,col:b.col||b.tipo,poly:b.poly,lab:b.lab,text:b.nm||b.id,
+      title:`${bN(b.id)}`,sub:tt,aria:`${bN(b.id)}, ${join(tt,base)}`.replace(/ · /g,', '),n:base,
       pct:hasP?()=>agg(bZones(b.id)).pct:null,go:{lvl:1,b:b.id}};});
   if(v.lvl===1) return cubsOf(v.b).map(c=>({id:c.id,col:colOf(v.b),poly:c.poly,lab:c.lab,text:c.id,
     title:`${LB.l2} ${c.id}`,sub:LB.l2,aria:`${LB.l2} ${c.id}${cn(c)?', '+cn(c):''}`,n:cn(c),
@@ -584,7 +587,7 @@ const fmtStamp=s=>{ const d=new Date(s); return isNaN(d)?'':d.toLocaleString('es
 function up(){ if(!view||view.lvl===0) return; if(view.lvl===2) go({lvl:1,b:view.b},'out',bboxOfCub(view)); else go({lvl:0},'out',bboxOfBuilding(view.b)); }
 function render(){
   const v=view, tipo=v.lvl?B[v.b].tipo:null, tt=v.lvl?bTxt(v.b):'';
-  const bLabel=v.lvl?`${LB.l1} ${v.b}${tt?' · '+tt:''}`:'';
+  const bLabel=v.lvl?`${bN(v.b)}${tt?' · '+tt:''}`:'';
   backBtn.disabled=v.lvl===0;
   const items=[[LB.l0,v.lvl>0&&(()=>go({lvl:0},'out',bboxOfBuilding(v.b)))]];
   if(v.lvl>=1) items.push([bLabel,v.lvl>1&&(()=>go({lvl:1,b:v.b},'out',bboxOfCub(v)))]);
@@ -599,10 +602,10 @@ function render(){
   if(v.lvl===0){ey.textContent='Nivel 1 de 3';h.textContent=LB.l0;
     const neds=new Set(DATA.buildings.map(b=>b.ed).filter(Boolean)).size;
     p.textContent=`${DATA.buildings.length} ${LB.l1p.toLowerCase()}${neds?' · '+neds+' edificios':(KIND==='electrica'||!Object.keys(T).length)?'':' · '+Object.keys(T).length+' tipos'}. ${LB.intro0}`;}
-  else if(v.lvl===1){ey.textContent='Nivel 2 de 3';h.textContent=`${LB.l1} ${v.b}`;const np=bPanels(v.b);
+  else if(v.lvl===1){ey.textContent='Nivel 2 de 3';h.textContent=`${bN(v.b)}`;const np=bPanels(v.b);
     p.textContent=isStr()?join(tt,`${strsOf(v.b).length} strings en este plano`):join(tt,`${cubsOf(v.b).length} ${LB.l2p.toLowerCase()}`,(LB.unit&&np!=null)?`${np} ${LB.unit}`:'');}
   else{ey.textContent='Nivel 3 de 3';h.textContent=`${LB.l2} ${cubName(v.b,v.c)}`;const c=cubsOf(v.b).find(c=>c.id===v.c);
-    p.textContent=join(`${LB.l1} ${v.b}`,tt,cn(c));}
+    p.textContent=join(`${bN(v.b)}`,tt,cn(c));}
   head.append(ey,h,p);
   const ul=document.createElement('ul'); ul.className='list';
   const cubPct=c=>CAPAS?()=>isDone(v.b,c.id,CAPA)?100:0:CL.length?()=>pctZ(v.b,c.id):null;
@@ -615,7 +618,7 @@ function render(){
     b.style.setProperty('--zc',`var(--t${r.col})`);
     if(v.lvl===2&&r.id===v.c) b.setAttribute('aria-current','true');
     b.innerHTML='<span class="sw"></span><span class="id"></span><span class="meta"></span><span class="n"></span>';
-    b.children[1].textContent=r.id; b.children[2].textContent=r.sub; b.children[3].textContent=join(r.n,pctTxt(r));
+    b.children[1].textContent=r.text||r.id; b.children[2].textContent=r.sub; b.children[3].textContent=join(r.n,pctTxt(r));
     b.addEventListener('mouseenter',()=>hot(r.id,true)); b.addEventListener('mouseleave',()=>hot(r.id,false));
     b.addEventListener('click',()=>{ if(busy||!r.go) return; if(v.lvl===2){ if(r.id!==v.c) go(r.go,'swap'); } else go(r.go,'in',bboxOf(cur.data.find(z=>z.id===r.id).poly)); });
     li.appendChild(b); ul.appendChild(li);
@@ -677,18 +680,18 @@ function renderChecks(){
   if(CAPAS&&v.lvl===1&&isStr()){
     const e=edOf(v.b), ss=strsOf(v.b), n=ss.length*STRS.length;
     const dn=STRS.reduce((a,c)=>a+ss.filter(s=>isDone(e,s,chkId(c))).length,0); pct=n?Math.round(100*dn/n):0;
-    ey.textContent='Strings'; h.textContent=`${LB.l1} ${v.b}`; cnt.textContent=`${dn}/${n}`; p.textContent=`${bTxt(v.b)} · strings de este plano`;
+    ey.textContent='Strings'; h.textContent=`${bN(v.b)}`; cnt.textContent=`${dn}/${n}`; p.textContent=`${bTxt(v.b)} · strings de este plano`;
     for(const c of STRS){ if(STRS.length>1) subHead(c.label);
       for(const s of ss){ const i=strInfo(e,s); chkRow(e,s,chkId(c),`String ${s}${i.n?` (${i.n})`:''}`,false); } }
     extraRows();
   } else if(v.lvl===2){
     const done=zdone(v.b,v.c); pct=pctZ(v.b,v.c);
-    ey.textContent=CAPAS?'Completado':'Checklist del día'; h.textContent=`${LB.l2} ${cubName(v.b,v.c)}`; cnt.textContent=`${done}/${CL.length}`; p.textContent=`${LB.l1} ${v.b}`;
+    ey.textContent=CAPAS?'Completado':'Checklist del día'; h.textContent=`${LB.l2} ${cubName(v.b,v.c)}`; cnt.textContent=`${done}/${CLz(v.b,v.c).length}`; p.textContent=`${bN(v.b)}`;
     const cb=cubsOf(v.b).find(c=>c.id===v.c);
-    for(const k of CL) chkRow(v.b,v.c,k.id,k.label+uds(k,cb),CAPAS&&k.id===CAPA);
+    for(const k of CLz(v.b,v.c)) chkRow(v.b,v.c,k.id,k.label+uds(k,cb),CAPAS&&k.id===CAPA);
   } else if(CAPAS){
     const blocks=v.lvl===0?DATA.buildings.map(b=>b.id):[v.b], a=capaAgg(CAPA,blocks); pct=a.pct;
-    ey.textContent='Avance de obra'; h.textContent=v.lvl===0?'Total de la obra':`${LB.l1} ${v.b}`; cnt.textContent=a.pct+'%';
+    ey.textContent='Avance de obra'; h.textContent=v.lvl===0?'Total de la obra':`${bN(v.b)}`; cnt.textContent=a.pct+'%';
     p.textContent=`${capaOf(CAPA).label}: ${a.d} de ${a.n} ${a.unit}`;
     // los checks de edificio y de obra que se marcan en esta vista salen abajo (extraRows), no como total
     for(const c of CAPAS){ if(c.nivel==='obra'||(c.nivel==='edificio'&&v.lvl===1)) continue;
@@ -696,12 +699,12 @@ function renderChecks(){
     extraRows();
   } else {
     const list=v.lvl===0?allZones():bZones(v.b), a=agg(list); pct=a.pct;
-    ey.textContent='Avance de obra'; h.textContent=v.lvl===0?'Total de la obra':`${LB.l1} ${v.b}`; cnt.textContent=a.pct+'%';
+    ey.textContent='Avance de obra'; h.textContent=v.lvl===0?'Total de la obra':`${bN(v.b)}`; cnt.textContent=a.pct+'%';
     p.textContent=`${a.done} de ${a.max} checks · ${a.n} ${LB.l2p.toLowerCase()}`;
     for(const x of a.per){
       const li=document.createElement('li'); li.className='ag';
-      const r=document.createElement('div'); r.className='row'; const n=document.createElement('span'); n.textContent=x.k.label; const c=document.createElement('b'); c.textContent=`${x.d}/${a.n}`; r.append(n,c);
-      const b=document.createElement('div'); b.className='cbar'; const f=document.createElement('i'); f.style.width=(a.n?100*x.d/a.n:0)+'%'; b.appendChild(f);
+      const r=document.createElement('div'); r.className='row'; const n=document.createElement('span'); n.textContent=x.k.label; const c=document.createElement('b'); c.textContent=`${x.d}/${x.n}`; r.append(n,c);
+      const b=document.createElement('div'); b.className='cbar'; const f=document.createElement('i'); f.style.width=(x.n?100*x.d/x.n:0)+'%'; b.appendChild(f);
       li.append(r,b); body.appendChild(li);
     }
   }
@@ -729,7 +732,7 @@ fsback.addEventListener('click',()=>{ fsnav.classList.remove('open'); fstog.setA
 function buildNav(v,tipo,rows){
   fsback.disabled=v.lvl===0;
   const tt=v.lvl?bTxt(v.b):'';
-  fstxt.textContent=v.lvl===0?LB.l0:v.lvl===1?join(`${LB.l1} ${v.b}`,tt):`${LB.l2} ${cubName(v.b,v.c)}`;
+  fstxt.textContent=v.lvl===0?LB.l0:v.lvl===1?join(`${bN(v.b)}`,tt):`${LB.l2} ${cubName(v.b,v.c)}`;
   const close=()=>{ fsnav.classList.remove('open'); fstog.setAttribute('aria-expanded',false); };
   const row=(label,meta,color,fn,cur)=>{ const b=document.createElement('button'); const i=document.createElement('i'); if(color) i.style.setProperty('--zc',color);
     const l=document.createElement('span'); l.textContent=label; const m=document.createElement('small'); m.textContent=meta||'';
@@ -737,10 +740,10 @@ function buildNav(v,tipo,rows){
   const out=[];
   if(v.lvl>0){ const h=document.createElement('h3'); h.textContent='Subir a'; out.push(h);
     out.push(row(LB.l0,'',null,()=>{close(); go({lvl:0},'out',bboxOfBuilding(v.b));}));
-    if(v.lvl===2) out.push(row(join(`${LB.l1} ${v.b}`,tt),'',`var(--t${colOf(v.b)})`,()=>{close(); go({lvl:1,b:v.b},'out',bboxOfCub(v));})); }
+    if(v.lvl===2) out.push(row(join(`${bN(v.b)}`,tt),'',`var(--t${colOf(v.b)})`,()=>{close(); go({lvl:1,b:v.b},'out',bboxOfCub(v));})); }
   const h2=document.createElement('h3'); h2.textContent=v.lvl===0?LB.l1p:(CAPAS&&isStr()&&v.lvl===1)?'Strings':LB.l2p; out.push(h2);
   for(const r of rows){ const col=`var(--t${r.col})`;
-    out.push(row(v.lvl===0?`${LB.l1} ${r.id}`:r.title||`${LB.l2} ${r.id}`, join(r.n,!r.pct?'':r.single?(r.pct()===100?'✓':''):r.pct()+'%'), col, ()=>{
+    out.push(row(v.lvl===0?`${bN(r.id)}`:r.title||`${LB.l2} ${r.id}`, join(r.n,!r.pct?'':r.single?(r.pct()===100?'✓':''):r.pct()+'%'), col, ()=>{
       if(!r.go) return;
       if(v.lvl===2){ if(r.id!==v.c) go(r.go,'swap'); }
       else { close(); go(r.go,'in',bboxOf(cur.data.find(z=>z.id===r.id).poly)); } }, v.lvl===2&&r.id===v.c)); }
