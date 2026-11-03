@@ -14,14 +14,16 @@ Antes de pedir nada más, preguntar con AskUserQuestion: **«¿La instalación e
 |---|---|---|
 | Niveles | Implantación → Edificio → Cubierta | Plano general → Planta → Estancia |
 | Color de zona | Por tipo de edificio | Por planta |
-| Checklist (nivel más concreto) | Cubierta | Estancia |
+| Checklist | Por cubierta, por string, por edificio y de toda la obra (ver abajo) | Por estancia |
 
 **Los nombres y el número de zonas (edificios, plantas, cubiertas, estancias) salen siempre de los planos que dé el usuario**; nunca asumir los de los ejemplos (Cine, Hall, P.S.…, que son solo ilustrativos).
 
-Los checks son prácticamente idénticos entre instalaciones del mismo tipo; viven en `_plantilla/checklists.json` (fuente única, también para la App IEC). **Eléctrica:** tubo, caja, cable, mecanismos, embellecedores, luminarias y cajetines (lista dada por IEC el 29/10/2026, «en general»). **Fotovoltaica:** aún por determinar; el checklist actual es provisional y el visor muestra «Checklist provisional». Avisar al usuario cuando se use un checklist provisional; si da la lista definitiva, actualizar `checklists.json` y poner `provisional: false`.
+Las listas de referencia viven en `_plantilla/checklists.json` (también para la App IEC):
+- **Eléctrica** (IEC, 29/10/2026, «en general»): tubo, caja, cable, mecanismos, embellecedores, luminarias y cajetines. Se marcan por estancia.
+- **Fotovoltaica** (IEC, 03/11/2026): estructura, optimizadores, paneles, strings, cableado CC, cableado AC, montaje inversor, montaje batería, cuadro CC, cuadro AC, conexión vertido y puesta en marcha. **Cada obra lleva los checks y las cantidades que salgan de sus planos** (p. ej. sin batería no hay «Montaje batería»), así que **preguntar con AskUserQuestion en qué nivel va cada check** antes de generar el `data.json`. Niveles posibles en `cfg.capas`: `cubierta`, `string`, `edificio` y `obra`. Referencia (Ónice): estructura, optimizadores (uno por panel) y paneles por cubierta; strings y cableado CC por string; cableado AC, inversor, batería, cuadro CC, cuadro AC y conexión vertido por edificio; puesta en marcha una vez por obra. «Conexión vertido» va **una por inversor**: por edificio solo si cada edificio tiene el suyo; si no, preguntar.
 
 ## Entradas que hay que pedir
-Comunes: PDF del plano general; PDF con el plano de cada nivel intermedio; PDFs de detalle (una página por cubierta o estancia); cómo se nombran las zonas; si hay varios juegos (estructuras, strings), plantear un selector.
+Comunes: PDF del plano general; PDF con el plano de cada nivel intermedio; PDFs de detalle (una página por cubierta o estancia); cómo se nombran las zonas; si hay varios juegos (estructuras, strings), plantear un selector. **Proyecto de Airtable** al que pertenece la obra: su `external_id` (o su record id si no tiene) va en `cfg.obraId`, y es donde el backend guarda los checks. Un plano real va solo en el proyecto de su obra; para pruebas usar otro plano (p. ej. `prueba-electrica/`), nunca el de una obra real.
 - **Fotovoltaica:** edificios marcados por colores (mismo color = mismo tipo, distinta colocación). Colores usados en Ónice: tipo 1 azul #2776BB, tipo 2 verde #129C47, tipo 3 rojo #E5242A, tipo 4 amarillo #E4C400.
 - **Eléctrica:** plantas (o zonas) del plano general y las estancias de cada planta, con los nombres que figuren en los planos. Pedir también si hay plano de detalle por estancia; si no, usar la hoja de la planta.
 
@@ -29,7 +31,8 @@ Comunes: PDF del plano general; PDF con el plano de cada nivel intermedio; PDFs 
 Repositorio GitHub `IEC-GROUP011/Planos-Interactivos-IEC` (si no está en la sesión, añadirlo con acceso de escritura):
 - `_plantilla/template.html`: visor completo; marcador `__DATA__` para el JSON.
 - `_plantilla/build_visor.py`: `python3 _plantilla/build_visor.py <carpeta>` genera `<carpeta>/index.html` desde `<carpeta>/data.json` e inyecta el checklist.
-- `_plantilla/checklists.json`: checklists por tipo. `_plantilla/ESPECIFICACION_APP_IEC.md`: tabla de Airtable, lectura del avance y aviso diario. `_plantilla/LEEME.md`: formato de `data.json`.
+- `_plantilla/checklists.json`: checklists por tipo. `_plantilla/ESPECIFICACION_APP_IEC.md`: tabla de Airtable, lectura del avance y aviso diario. `_plantilla/LEEME.md`: formato de `data.json`, capas y niveles de los checks (leerlo antes de generar un proyecto).
+- Si no hay Python, `build_visor.py` se puede portar a Node con el mismo resultado (leer la plantilla con saltos de línea LF).
 - `_plantilla/ejemplo-onice/` (FV real) y `_plantilla/ejemplo-electrica-mock/` (eléctrica con planos inventados; `build_mock.py` lo regenera).
 - Cada proyecto va en su carpeta (`onice/`, `onice-v2/`, …) y se enlaza desde el `index.html` de la portada.
 URL base: https://iec-group011.github.io/Planos-Interactivos-IEC/<carpeta>/
@@ -39,16 +42,16 @@ URL base: https://iec-group011.github.io/Planos-Interactivos-IEC/<carpeta>/
 2. Extraer zonas pulsables de los vectores del PDF con PyMuPDF (`get_drawings()`): polígonos del nivel 1 en el general y del nivel 2 en el plano de cada edificio/planta. Coordenadas en pt de la hoja. Si el PDF no trae vectores útiles, dibujar los polígonos a mano sobre la imagen.
 3. Registrar planos entre sí (el plano de edificios puede estar ESPEJADO respecto a los minimapas): volteo horizontal, template matching con OpenCV, reglas de posición.
 4. Comprobar que los detalles corresponden a la zona correcta por patrón (no por nombre de archivo). En Ónice TIPO1 y TIPO2 venían cruzados: se resuelve con `cfg.dt` (`{"1":2,"2":1}`).
-5. Generar `data.json` con `cfg` (`kind`, `title`, `site`, `obraId`, `progressUrl`, `modo`), `buildings` (`{id,tipo,col,poly,lab}`) y `tipos` (`{cubs:[{id,n,img,poly,lab}]}`). Formato completo en `LEEME.md`. Ejecutar `build_visor.py`.
+5. Generar `data.json` con `cfg` (`kind`, `title`, `site`, `obraId`, `progressUrl`, `modo`, `writeUrl` y, en FV, `capas` con el nivel de cada check), `buildings` (`{id,tipo,col,poly,lab}`) y `tipos` (`{cubs:[{id,n,img,poly,lab}]}`). Formato completo en `LEEME.md`. Ejecutar `build_visor.py`. `progressUrl` y `writeUrl` = `https://formularioiec-bff-iec-294739714316.europe-southwest1.run.app/avance` (con `?obra=<obraId>` en `progressUrl`). Empezar en `modo: "lectura"` y pasar a `"escritura"` cuando el usuario confirme la lista de checks de esa obra.
 6. Probar con Playwright (Chromium instalado; no ejecutar `playwright install`): escritorio, móvil vertical 390×780 y **móvil horizontal 844×390** (el uso habitual en obra), todos táctiles; recorrer general → nivel 1 → nivel 2; con y sin avance; en móvil vertical desplegar el panel de checks; en horizontal comprobar panel fijo a la izquierda y pantalla completa con cajón de checks; sin desbordamiento horizontal ni errores JS (los fallos de Google Fonts en el sandbox no cuentan). Revisar capturas.
 7. Publicar: copiar a la carpeta del proyecto, actualizar la portada, `git commit` + `git push` a `main` (GitHub Pages publica solo). **Pedir confirmación antes de empujar a `main`**: el repositorio es público.
 
 ## Checks de avance diario
 - **Panel izquierdo** (ocultable con «Ocultar checks»): en el último nivel muestra el checklist de la cubierta/estancia con quién y cuándo lo marcó; en los niveles superiores muestra el avance agregado (total y por check). Las zonas llevan una barra de avance bajo su etiqueta. **Móvil en horizontal** (lo habitual en obra; `orientation:landscape` y alto ≤ 520 px): el panel queda fijo a la izquierda (250 px), el plano ocupa el resto y la lista de zonas del lado derecho se sustituye por el menú de navegación dentro del plano; botones de 44 px. **Pantalla completa** (botón del plano o tecla F): el panel pasa a un cajón sobre el plano, a la izquierda, con botón «Checks 3/7» para abrirlo y ««» para cerrarlo. En móvil vertical el panel es un cajón plegable bajo el plano.
 - **Quién escribe:** el instalador marca los checks **sobre el plano**, con el visor abierto dentro de la App IEC (no hay pantalla de checks aparte). Los proyectos reales usan `cfg.modo: "escritura"` y `cfg.writeUrl`; la App inyecta `window.IEC_AUTH={getToken,iniciales}` (token de Firebase) y el visor envía cada cambio por POST al backend de la App (BFF en Cloud Run, que es el único que habla con Airtable) (tabla «Avance de obra»); con cola sin conexión. Sin token (fuera de la App) el visor es de solo lectura. La App avisa a las 16:55 al responsable del día (cambia cada día), solo en días de obra. El visor lee `cfg.progressUrl` cada minuto. No poner nunca claves de Airtable en el visor. `cfg.modo: "demo"` permite marcar solo para pruebas (guarda en el navegador).
-- **Clave de zona** del avance: `<id nivel 1>/<id nivel 2>` (p. ej. `1.1/1.4`, `P.S./CINE`). Las cubiertas con el mismo id en edificios distintos no se mezclan.
+- **Clave de zona** del avance: `<id nivel 1>/<id nivel 2>` (p. ej. `1.1/1.4`, `P.S./CINE`). Las cubiertas con el mismo id en edificios distintos no se mezclan. Con capas: por string `<edificio>/<string>` (p. ej. `E1/S4`), por edificio `<edificio>/edificio` y de obra `obra/general`. Los checks de edificio salen abajo del panel al abrir un bloque; los de obra, en la implantación.
 - Detalle (tabla «Avance de obra», formato del JSON, aviso 16:55 y pantalla en la App): `ESPECIFICACION_APP_IEC.md`.
-- Cambiar el checklist: editar `checklists.json` y volver a ejecutar `build_visor.py`; no cambiar los `id` de checks con registros.
+- Cambiar el checklist: sin capas, editar `checklists.json`; con capas, editar `cfg.capas` del `data.json` del proyecto. Después, volver a ejecutar `build_visor.py`. No cambiar los `id` de checks que ya tengan registros en Airtable.
 
 ## Características del visor (mantener)
 - Zoom animado, arrastre, pellizco, doble toque, rueda; teclado (Esc/atrás, flechas, +/−/0, F).
