@@ -275,6 +275,15 @@ button.chk:hover{background:var(--hot)}
 .zone.done polygon{fill:var(--ok);fill-opacity:.2}
 .zone.mark{pointer-events:none}
 .zone.mark polygon{fill-opacity:.08;stroke-width:3.5}
+/* selección de varias zonas (mantener pulsada una zona): sin menú ni selección de texto del móvil al mantener */
+.zone{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.zone.sel polygon{fill:var(--accent);fill-opacity:.34;stroke:var(--accent);stroke-opacity:1;stroke-width:4}
+.zone.sel .tag rect{fill:var(--accent);stroke:#fff}
+.zone.sel .tag text{fill:var(--accent-ink)}
+.csel{flex:none;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;padding:6px 14px;border-bottom:1px solid var(--line);background:var(--hot);font-size:12.5px}
+.csel button{font:inherit;font-weight:600;min-height:40px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);cursor:pointer}
+.chk[aria-checked="mixed"] .box{border-color:var(--ok);color:var(--ok)}
+@media (orientation:landscape) and (max-height:520px){.csel{padding:4px 10px;font-size:12px;justify-content:flex-end}.csel>span{display:none}.csel button{min-height:36px}}
 .chk.cur .lbl{color:var(--accent)}
 @media (max-width:820px){.capas{left:8px;bottom:8px}.capas button{height:40px;padding:0 11px}}
 @media (orientation:landscape) and (max-height:520px){.capas button{height:44px}}
@@ -502,6 +511,17 @@ async function flushQ(){
   }catch(e){ QFAIL=true; /* sin conexión: se reintenta */ }
   flushing=false; saveQ(); refreshProg();
 }
+/* ---------- selección de varias zonas del bloque en vista (para marcar sus checks de golpe) ---------- */
+const SEL=new Set();
+const puedeSel=()=>CAN()&&!!view&&view.lvl===1&&!(CAPAS&&isStr());
+function pintarSel(){ if(cur) for(const [zid,g] of Object.entries(cur.zones)) g.classList.toggle('sel',SEL.has(zid)); }
+function toggleSel(id){
+  if(!puedeSel()) return;
+  if(SEL.has(id)) SEL.delete(id); else SEL.add(id);
+  pintarSel(); refreshProg();
+}
+function limpiarSel(){ if(!SEL.size) return; SEL.clear(); pintarSel(); refreshProg(); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&SEL.size) limpiarSel(); });
 function toggleCheck(b,c,id){
   if(!CAN()) return;
   const key=PKEY(b,c), z=PROG.zones[key]||(PROG.zones[key]={}), d=!isDone(b,c,id), now=new Date().toISOString();
@@ -599,8 +619,24 @@ async function mkLayer(v){
       tag.append(bg,f); }
     g.appendChild(tag);
     if(z.mark){ svg.appendChild(g); continue; }
-    const open=()=>{ if(!busy&&cur&&cur.el===el) go(z.go,'in',bboxOf(z.poly)); };
+    // Nivel de bloque o planta: mantener pulsada una zona la selecciona (y con la selección abierta, cada toque añade o
+    // quita zonas; en el ordenador, Ctrl/Mayús + clic). Sin selección, tocar abre la zona como siempre.
+    let pulsada=null, largo=false, saltarHasta=0;
+    const open=e=>{
+      if(Date.now()<saltarHasta) return;                       // el clic que sigue a una pulsación larga
+      if(busy||!cur||cur.el!==el) return;
+      if(v.lvl===1&&puedeSel()&&(SEL.size||(e&&(e.ctrlKey||e.metaKey||e.shiftKey)))){ toggleSel(z.id); return; }
+      go(z.go,'in',bboxOf(z.poly)); };
     g.addEventListener('click',open);
+    if(v.lvl===1){
+      const soltar=()=>{ if(pulsada){ clearTimeout(pulsada); pulsada=null; } if(largo){ largo=false; saltarHasta=Date.now()+450; } };
+      g.addEventListener('pointerdown',e=>{
+        if(e.button>0||!puedeSel()) return; clearTimeout(pulsada);
+        pulsada=setTimeout(()=>{ pulsada=null; if(moved>5||ptrs.size>1||busy) return;   // arrastrar o pellizcar no selecciona
+          largo=true; toggleSel(z.id); try{ if(navigator.vibrate) navigator.vibrate(25); }catch(_){} },500); });
+      g.addEventListener('pointerup',soltar); g.addEventListener('pointercancel',soltar);
+      g.addEventListener('contextmenu',e=>e.preventDefault());
+    }
     g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
     g.addEventListener('mouseenter',()=>hot(z.id,true)); g.addEventListener('mouseleave',()=>hot(z.id,false));
     g.addEventListener('focus',()=>hot(z.id,true)); g.addEventListener('blur',()=>hot(z.id,false));
@@ -644,7 +680,7 @@ async function transition(nl,mode,bb){
   old.el.remove(); cur=nl;
 }
 async function go(v,mode,bb){
-  if(busy) return; busy=true;
+  if(busy) return; busy=true; SEL.clear();               // cambiar de plano quita la selección
   try{ const L=await mkLayer(v); await transition(L,mode,bb); view=v; loading.remove(); render(); updateBars(); preload(); }
   catch(err){ if(loading.isConnected){loading.textContent='No se pudo cargar el visor. Recarga la página o prueba con otro navegador.';} console.error(err); }
   finally{busy=false;}
@@ -672,7 +708,10 @@ function render(){
   crumbs.replaceChildren(...items.map(([txt,fn])=>{const li=document.createElement('li');
     if(fn){const b=document.createElement('button'); b.textContent=txt; b.addEventListener('click',fn); li.appendChild(b);}
     else{const s=document.createElement('span'); s.textContent=txt; s.setAttribute('aria-current','page'); li.appendChild(s);} return li;}));
-  hint.textContent=v.lvl===0?`Pincha ${LB.a1} para acercarte a su plano`:v.lvl===1?`Pincha ${LB.a2} para ver su plano de detalle`:'Rueda para ampliar y arrastra para mover el plano';
+  hint.textContent=v.lvl===0?`Pincha ${LB.a1} para acercarte a su plano`
+    :v.lvl===1?(SEL.size?`Toca ${LB.l2p.toLowerCase()} para añadirlas o quitarlas de la selección`
+      :`Pincha ${LB.a2} para ver su plano de detalle${puedeSel()?' · mantén pulsada para seleccionar varias':''}`)
+    :'Rueda para ampliar y arrastra para mover el plano';
 
   const head=document.createElement('header'); const ey=document.createElement('div'); ey.className='eyebrow';
   const h=document.createElement('h2'); const p=document.createElement('p');
@@ -694,10 +733,12 @@ function render(){
     const li=document.createElement('li'); const b=document.createElement('button'); b.className='item'; b.dataset.id=r.id;
     b.style.setProperty('--zc',`var(--t${r.col})`);
     if(v.lvl===2&&r.id===v.c) b.setAttribute('aria-current','true');
+    if(v.lvl===1&&SEL.has(r.id)) b.setAttribute('aria-pressed','true');
     b.innerHTML='<span class="sw"></span><span class="id"></span><span class="meta"></span><span class="n"></span>';
     b.children[1].textContent=r.text||r.id; b.children[2].textContent=r.sub; b.children[3].textContent=join(r.n,pctTxt(r));
     b.addEventListener('mouseenter',()=>hot(r.id,true)); b.addEventListener('mouseleave',()=>hot(r.id,false));
-    b.addEventListener('click',()=>{ if(busy||!r.go) return; if(v.lvl===2){ if(r.id!==v.c) go(r.go,'swap'); } else go(r.go,'in',bboxOf(cur.data.find(z=>z.id===r.id).poly)); });
+    b.addEventListener('click',()=>{ if(busy||!r.go) return; if(v.lvl===1&&SEL.size&&puedeSel()){ toggleSel(r.id); return; }
+      if(v.lvl===2){ if(r.id!==v.c) go(r.go,'swap'); } else go(r.go,'in',bboxOf(cur.data.find(z=>z.id===r.id).poly)); });
     li.appendChild(b); ul.appendChild(li);
   }
   side.replaceChildren(head,ul);
@@ -720,6 +761,7 @@ const cclose=document.createElement('button'); cclose.type='button'; cclose.clas
 cclose.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 6l-6 6 6 6M19 6l-6 6 6 6"/></svg>';
 ['pointerdown','pointerup','pointercancel','dblclick','wheel','click'].forEach(t=>{ checks.addEventListener(t,e=>e.stopPropagation(),{passive:true}); cpill.addEventListener(t,e=>e.stopPropagation(),{passive:true}); });
 const ICON_OK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const ICON_MIX='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><path d="M6 12h12"/></svg>';   // check hecho solo en algunas zonas
 const ICON_CH='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>';
 /* selector «Día del trabajo»: un solo elemento que se reutiliza en cada repintado del panel */
 const cdia=document.createElement('div'); cdia.className='cdia';
@@ -775,7 +817,38 @@ function renderChecks(){
     if(v.lvl===1&&EDS.length){ const e=edOf(v.b); subHead(`Edificio ${e.replace(/^E/,'')}`); for(const c of EDS) chkRow(e,EZ,c.id,c.label,false); }
     if(v.lvl===0&&OBRA.length){ subHead('Toda la obra'); for(const c of OBRA) chkRow(OZ[0],OZ[1],c.id,c.label,false); }
   };
-  if(CAPAS&&v.lvl===1&&isStr()){
+  // Varias zonas seleccionadas: cada check del checklist sale una vez, con su estado en todas ellas.
+  let csel=null;
+  const selIds=(v.lvl===1&&puedeSel())?[...SEL].filter(c=>cubsOf(v.b).some(x=>x.id===c)):[];
+  const chkSel=(zb,zs,id,label)=>{
+    const hechas=zs.filter(c=>isDone(zb,c,id)).length, todas=hechas===zs.length, est=todas?'true':hechas?'mixed':'false';
+    const li=document.createElement('li'); const el=document.createElement('button'); el.type='button'; el.className='chk';
+    el.setAttribute('role','checkbox'); el.setAttribute('aria-checked',est);
+    // Si ya está en todas, se desmarca en todas; si no, se marca en las que falta (una marca por zona).
+    el.addEventListener('click',()=>{ for(const c of zs) if(todas||!isDone(zb,c,id)) toggleCheck(zb,c,id); });
+    const box=document.createElement('span'); box.className='box'; box.innerHTML=est==='mixed'?ICON_MIX:ICON_OK;
+    const tx=document.createElement('span'); const l=document.createElement('span'); l.className='lbl'; l.textContent=label; tx.appendChild(l);
+    const eps=zs.map(c=>estadoPend(zb,c,id)).filter(Boolean), env=eps.includes('env');
+    const w=document.createElement('span'); w.className='who'+(env?' env':'');
+    w.textContent=eps.length?(env?'Enviando…':eps.includes('movil')?'Guardado en el móvil · se subirá solo':'Sin enviar'):`${hechas} de ${zs.length}`;
+    if(env) w.setAttribute('role','status'); tx.appendChild(w);
+    el.append(box,tx); li.appendChild(el); body.appendChild(li);
+  };
+  if(selIds.length){
+    const zsDe=k=>selIds.filter(c=>CLz(v.b,c).some(x=>x.id===k.id));
+    const ks=CL.filter(k=>zsDe(k).length);
+    let n=0,dn=0; for(const k of ks){ const zs=zsDe(k); n+=zs.length; dn+=zs.filter(c=>isDone(v.b,c,k.id)).length; }
+    pct=n?Math.round(100*dn/n):0;
+    ey.textContent='Selección';
+    h.textContent=selIds.length===1?`1 ${LB.l2.toLowerCase()} seleccionada`:`${selIds.length} ${LB.l2p.toLowerCase()} seleccionadas`;
+    cnt.textContent=`${dn}/${n}`;
+    p.textContent=`${bN(v.b)} · ${selIds.map(c=>cubName(v.b,c)).join(', ')}`;
+    for(const k of ks) chkSel(v.b,zsDe(k),k.id,k.label);
+    csel=document.createElement('div'); csel.className='csel';
+    const ct=document.createElement('span'); ct.textContent=`Toca ${LB.l2p.toLowerCase()} para añadirlas o quitarlas.`;
+    const cq=document.createElement('button'); cq.type='button'; cq.textContent='Quitar selección'; cq.addEventListener('click',limpiarSel);
+    csel.append(ct,cq);
+  } else if(CAPAS&&v.lvl===1&&isStr()){
     const e=edOf(v.b), ss=strsOf(v.b), n=ss.length*STRS.length;
     const dn=STRS.reduce((a,c)=>a+ss.filter(s=>isDone(e,s,chkId(c))).length,0); pct=n?Math.round(100*dn/n):0;
     ey.textContent='Strings'; h.textContent=`${bN(v.b)}`; cnt.textContent=`${dn}/${n}`; p.textContent=`${bTxt(v.b)} · strings de este plano`;
@@ -828,8 +901,9 @@ function renderChecks(){
     // Se cambia todo menos el selector de fecha, que se queda en su sitio sin sacarlo del documento: así no pierde
     // el foco ni se cierra su calendario mientras el panel se repinta (cada pocos segundos con marcas pendientes).
     syncDia();
-    if(cdia.parentNode!==checks){ checks.replaceChildren(head,cdia,body,note,cclose); }
-    else { for(const n of [...checks.childNodes]) if(n!==cdia) n.remove(); checks.insertBefore(head,cdia); checks.append(body,note,cclose); }
+    const antes=csel?[head,csel]:[head];
+    if(cdia.parentNode!==checks){ checks.replaceChildren(...antes,cdia,body,note,cclose); }
+    else { for(const n of [...checks.childNodes]) if(n!==cdia) n.remove(); for(const n of antes) checks.insertBefore(n,cdia); checks.append(body,note,cclose); }
   }
   else checks.replaceChildren(head,body,note,cclose);
 }
