@@ -436,11 +436,55 @@ const MIN_DIA=()=>{ const d=new Date(); d.setDate(d.getDate()-30); return ymd(d)
 let diaElegido=null;
 const DIA=()=>(diaElegido&&diaElegido>=MIN_DIA()&&diaElegido<HOY())?diaElegido:HOY();
 const saveQ=()=>{ try{ localStorage.setItem(QKEY,JSON.stringify(QUEUE)); }catch(e){} };
-const isPend=(b,c,k)=>QUEUE.some(q=>q.zona===PKEY(b,c)&&q.check===k);
-function applyQueue(){ for(const q of QUEUE){ const z=PROG.zones[q.zona]||(PROG.zones[q.zona]={});
-  z[q.check]=q.done?{done:true,by:(AUTH()&&AUTH().iniciales)||'',date:q.fecha||(q.ts||'').slice(0,10)}:{done:false}; } }
+/* Con la App IEC 1.6.6 o posterior (IEC_AUTH.entregar): cada marca se entrega a la App, que la guarda y la sube ella
+   misma aunque se bloquee el móvil o se cierre el plano. APPQ = las marcas que la App aún tiene de esta obra (pendientes
+   o subidas hace poco), que se pintan encima de lo que diga el servidor. Con apps anteriores, el visor envía él mismo. */
+const APP=()=>{ const A=AUTH(); return !!(A&&typeof A.entregar==='function'&&typeof A.pendientes==='function'); };
+let APPQ=[];
+const appPend=()=>APPQ.some(m=>m.estado!=='subida');
+async function leerApp(){
+  if(!APP()) return;
+  try{
+    const l=await AUTH().pendientes(CFG.obraId||'');
+    if(Array.isArray(l)){
+      const habia=appPend(); APPQ=l;
+      // Acaba de subir todo: se relee el servidor (con margen por su caché) para que lo que se ve venga de allí.
+      if(habia&&!appPend()) setTimeout(()=>{ loadProgress().then(refreshProg); },4000);
+    }
+  }catch(e){}
+  applyQueue(); refreshProg();
+}
+// Estado de envío del check: null (nada pendiente), 'env' (enviándose), 'movil' (guardado en la App, se subirá al
+// tener cobertura) o 'fallo' (el visor no pudo enviarlo ni entregarlo).
+function estadoPend(b,c,k){
+  const key=PKEY(b,c);
+  if(QUEUE.some(q=>q.zona===key&&q.check===k)) return (QFAIL||AUTHFAIL)?'fallo':'env';
+  let ult=null; for(const m of APPQ) if(m.zona===key&&m.check===k&&(!ult||(m.ts||'')>=(ult.ts||''))) ult=m;
+  if(!ult||ult.estado==='subida') return null;
+  return (ult.estado==='reintentando'||navigator.onLine===false)?'movil':'env';
+}
+const isPend=(b,c,k)=>!!estadoPend(b,c,k);
+function aplicarMarca(q){ const z=PROG.zones[q.zona]||(PROG.zones[q.zona]={});
+  z[q.check]=q.done?{done:true,by:(AUTH()&&AUTH().iniciales)||'',date:q.fecha||(q.ts||'').slice(0,10)}:{done:false}; }
+function applyQueue(){
+  APPQ.slice().sort((a,b)=>(a.ts||'')<(b.ts||'')?-1:(a.ts||'')>(b.ts||'')?1:0).forEach(aplicarMarca);
+  QUEUE.forEach(aplicarMarca);
+}
 async function flushQ(){
-  if(!WRITE||flushing||!QUEUE.length||!AUTH()) return; flushing=true;
+  if(!WRITE||flushing||!QUEUE.length||!AUTH()) return;
+  if(APP()){
+    flushing=true;
+    try{
+      while(QUEUE.length){
+        const ok=await AUTH().entregar(QUEUE[0]);
+        if(!ok){ QFAIL=true; break; }
+        QFAIL=false; QUEUE.shift(); saveQ();
+      }
+    }catch(e){ QFAIL=true; }
+    flushing=false; saveQ(); await leerApp();
+    return;
+  }
+  flushing=true;
   try{
     while(QUEUE.length){
       const t=await tok(); if(!t){ AUTHFAIL=true; break; }
@@ -710,8 +754,8 @@ function renderChecks(){
     el.setAttribute('role','checkbox'); el.setAttribute('aria-checked',d); if(edit){ el.type='button'; el.addEventListener('click',()=>toggleCheck(zb,zc,id)); } else el.setAttribute('aria-readonly','true');
     const box=document.createElement('span'); box.className='box'; box.innerHTML=ICON_OK;
     const tx=document.createElement('span'); const l=document.createElement('span'); l.className='lbl'; l.textContent=label; tx.appendChild(l);
-    const pend=isPend(zb,zc,id), env=pend&&!QFAIL&&!AUTHFAIL;
-    const meta=pend?(env?'Enviando…':'Sin enviar'):(d?(CAPAS?join(s.date?'Completado el '+fmtDate(s.date):'Completado',s.by):join(s.by,fmtDate(s.date))):''); if(meta){ const w=document.createElement('span'); w.className='who'+(env?' env':''); w.textContent=meta; if(env) w.setAttribute('role','status'); tx.appendChild(w); }
+    const ep=estadoPend(zb,zc,id), env=ep==='env';
+    const meta=ep?(env?'Enviando…':ep==='movil'?'Guardado en el móvil · se subirá solo':'Sin enviar'):(d?(CAPAS?join(s.date?'Completado el '+fmtDate(s.date):'Completado',s.by):join(s.by,fmtDate(s.date))):''); if(meta){ const w=document.createElement('span'); w.className='who'+(env?' env':''); w.textContent=meta; if(env) w.setAttribute('role','status'); tx.appendChild(w); }
     el.append(box,tx); li.appendChild(el); body.appendChild(li);
   };
   const aggRow=(label,dn,n,cur_)=>{
@@ -767,7 +811,10 @@ function renderChecks(){
     :!AUTH()?'Solo lectura: abre el plano desde la App IEC para marcar los checks.'
     :QUEUE.length&&QFAIL?`${QUEUE.length} ${QUEUE.length===1?'cambio sin enviar':'cambios sin enviar'}; se enviarán al recuperar la conexión.`:'';
   if(prov||PROG.error||wmsg) note.classList.add('warn');
-  const emsg=WRITE&&QUEUE.length&&!QFAIL&&!AUTHFAIL&&AUTH()?`Enviando ${QUEUE.length===1?'1 cambio':QUEUE.length+' cambios'}…`:'';
+  const nApp=QUEUE.length+APPQ.filter(m=>m.estado!=='subida').length;
+  const emsg=!WRITE||!AUTH()||AUTHFAIL?''
+    :APP()?(nApp&&!QFAIL?`${nApp===1?'1 cambio guardado':nApp+' cambios guardados'} en el móvil: la App ${nApp===1?'lo sube':'los sube'} aunque cierres el plano o bloquees el móvil.`:'')
+    :QUEUE.length&&!QFAIL?`Enviando ${QUEUE.length===1?'1 cambio':QUEUE.length+' cambios'}…`:'';
   checks.classList.toggle('edit',CAN());
   note.textContent=prov+(wmsg||emsg||(PROG.error?'No se pudo leer el avance; se reintentará en un minuto.'
     :DEMO?'Modo demostración: los checks se guardan solo en este navegador.'
@@ -908,6 +955,11 @@ measure();
   const v0=fromHash(); if(CAPAS) syncCapas(); await go(v0,'swap');
   p.then(()=>{ refreshProg(); });
   if(WRITE){ flushQ(); setInterval(flushQ,20000); addEventListener('online',flushQ); document.addEventListener('visibilitychange',()=>{ if(!document.hidden) flushQ(); }); }
+  if(WRITE&&APP()){
+    // Lo que la App tiene pendiente de esta obra: al abrir, cada 3 s mientras quede algo y al volver al plano.
+    leerApp(); setInterval(()=>{ if(appPend()||QUEUE.length) leerApp(); },3000);
+    document.addEventListener('visibilitychange',()=>{ if(!document.hidden) leerApp(); });
+  }
   if(CL.length&&CFG.progressUrl){
     const poll=async()=>{ await loadProgress(); refreshProg(); };
     setInterval(poll,60000);
