@@ -657,8 +657,8 @@ function updateBars(){ if(!cur||!CL.length) return;
   for(const z of cur.data){ const g=cur.zones[z.id]; if(!g||!z.pct) continue; const f=g.querySelector('.pgf'), bg=g.querySelector('.pgbg');
     if(f&&bg) f.setAttribute('width',(+bg.getAttribute('width'))*z.pct()/100);
     if(z.single) g.classList.toggle('done',z.pct()===100); } }
-// Con el calendario del «Día del trabajo» abierto no se repinta: lo cerraría (se repinta al salir de él).
-function refreshProg(){ if(!view||busy) return; const a=document.activeElement; if(a&&a.id==='cdia-in') return; render(); updateBars(); }
+// El repintado del panel no toca el selector «Día del trabajo» (ver renderChecks), así que no cierra su calendario.
+function refreshProg(){ if(!view||busy) return; render(); updateBars(); }
 const fmtDate=s=>{ if(!s) return ''; const d=new Date(s.length<=10?s+'T12:00:00':s); return isNaN(d)?'':d.toLocaleDateString('es-ES',{day:'numeric',month:'short'}); };
 const fmtStamp=s=>{ const d=new Date(s); return isNaN(d)?'':d.toLocaleString('es-ES',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); };
 function up(){ if(!view||view.lvl===0) return; if(view.lvl===2) go({lvl:1,b:view.b},'out',bboxOfCub(view)); else go({lvl:0},'out',bboxOfBuilding(view.b)); }
@@ -738,9 +738,8 @@ function syncDia(){
 din.addEventListener('change',()=>{
   const v=din.value, h=HOY();
   if(!v||v>=h) diaElegido=null; else if(v>=MIN_DIA()) diaElegido=v;   // fuera de rango: se queda el que había
-  din.value=DIA(); syncDia();
+  din.value=DIA(); syncDia(); refreshProg();
 });
-din.addEventListener('blur',()=>refreshProg());
 dhoy.addEventListener('click',()=>{ diaElegido=null; syncDia(); refreshProg(); });
 function renderChecks(){
   if(!CL.length||!view){ checks.hidden=true; cpill.hidden=true; return; }
@@ -825,7 +824,13 @@ function renderChecks(){
     :DEMO?'Modo demostración: los checks se guardan solo en este navegador.'
     :WRITE?(PROG.updated?`Última actualización: ${fmtStamp(PROG.updated)}. Toca un check para marcarlo; se guarda en Airtable.`:'Toca un check para marcarlo; se guarda en Airtable.')
     :PROG.updated?`Última actualización: ${fmtStamp(PROG.updated)}. Los checks se rellenan desde la App IEC.`:'Todavía no hay registros. Los checks se rellenan desde la App IEC.'));
-  if(CAN()){ syncDia(); checks.replaceChildren(head,cdia,body,note,cclose); }
+  if(CAN()){
+    // Se cambia todo menos el selector de fecha, que se queda en su sitio sin sacarlo del documento: así no pierde
+    // el foco ni se cierra su calendario mientras el panel se repinta (cada pocos segundos con marcas pendientes).
+    syncDia();
+    if(cdia.parentNode!==checks){ checks.replaceChildren(head,cdia,body,note,cclose); }
+    else { for(const n of [...checks.childNodes]) if(n!==cdia) n.remove(); checks.insertBefore(head,cdia); checks.append(body,note,cclose); }
+  }
   else checks.replaceChildren(head,body,note,cclose);
 }
 
