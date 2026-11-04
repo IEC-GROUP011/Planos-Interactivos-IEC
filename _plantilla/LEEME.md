@@ -21,6 +21,8 @@
 - `dt`: cruce de planos de detalle por tipo (solo si los PDF vinieron cruzados). Sin `cfg` se aplica el cruce antiguo de Ónice.
 - `modo`: `lectura` (por defecto; el visor solo lee el avance), `demo` (permite marcar y guarda en el navegador, para pruebas) o `escritura` (dentro de la App IEC: con `window.IEC_AUTH` inyectado por la App se puede marcar y cada cambio se envía por `POST` a `cfg.writeUrl`; sin él, solo lectura). Ver `ESPECIFICACION_APP_IEC.md` §3b.
 - `writeUrl`: endpoint `POST` de la App (obligatorio con `modo: "escritura"`).
+  - Cada marca lleva `ts` (momento en que se pulsa) y `fecha` (`AAAA-MM-DD`, el **día del trabajo**). Por defecto es hoy; el selector «Día del trabajo» del panel permite elegir hasta 30 días atrás (nunca futuro) y avisa en color mientras está en un día pasado. No se guarda: al abrir el plano vuelve a hoy. El backend guarda `fecha` en «Fecha» de Avance de obra; manda la última marca por `ts`.
+  - Mientras una marca se está enviando sale «Enviando…» con una rueda; «Sin enviar» solo si el último intento falló (sin conexión o servidor caído).
 - `imgV`: versión de las imágenes (p. ej. `"20261027"`); se añade como `?v=` a las URL para que nadie vea planos viejos en caché. Cambiarla cada vez que se sustituyan planos.
 - `nm` (opcional, en cada edificio/planta): nombre visible (p. ej. `"nm": "Planta baja"` con `id: "PB"`); sin él se muestra `<l1> <id>`.
 - Checks con `soloEn` (p. ej. `{"id": "cuadro", "label": "Cuadro eléctrico", "soloEn": ["PB/3"]}`): solo salen y cuentan en esas zonas (`<planta>/<zona>`).
