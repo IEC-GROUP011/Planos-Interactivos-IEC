@@ -14,17 +14,18 @@
   --t1:#2776BB; --t2:#129C47; --t3:#E5242A; --t4:#E4C400; --t5:#8A4FBF;
   --on-t1:#FFFFFF; --on-t2:#FFFFFF; --on-t3:#FFFFFF; --on-t4:#2B2500;
   --ok:#1E8A4C; --on-ok:#FFFFFF;
+  --past:#FFF1D6; --past-ink:#6B4300;
   --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
   --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
   --shadow:0 1px 2px rgba(20,32,43,.08),0 6px 20px rgba(20,32,43,.08);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --ok:#4CC38A; --on-ok:#06210F;
+  --ok:#4CC38A; --on-ok:#06210F; --past:#3A2A0A; --past-ink:#FFD58A;
   --bg:#0E141A; --surface:#161F27; --ink:#E6EDF3; --muted:#92A3B3; --line:#26323D;
   --stage:#0A0F13; --accent:#63B4EA; --accent-ink:#06202F; --hot:rgba(99,180,234,.14);
   --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35); color-scheme:dark}}
 :root[data-theme="dark"]{
-  --ok:#4CC38A; --on-ok:#06210F;
+  --ok:#4CC38A; --on-ok:#06210F; --past:#3A2A0A; --past-ink:#FFD58A;
   --bg:#0E141A; --surface:#161F27; --ink:#E6EDF3; --muted:#92A3B3; --line:#26323D;
   --stage:#0A0F13; --accent:#63B4EA; --accent-ink:#06202F; --hot:rgba(99,180,234,.14);
   --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35); color-scheme:dark}
@@ -141,6 +142,18 @@ button.chk:hover{background:var(--hot)}
 .chk[aria-checked="true"] .box{background:var(--ok);border-color:var(--ok);color:var(--on-ok)}
 .chk .lbl{font-weight:500;line-height:1.25}
 .chk .who{display:block;color:var(--muted);font-size:12px;margin-top:1px}
+/* enviando: rueda pequeña delante del texto (sin animación si el usuario lo pide) */
+.chk .who.env::before{content:"";display:inline-block;width:9px;height:9px;margin-right:6px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-1px;animation:gira .8s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.chk .who.env::before{animation:none}}
+/* día del trabajo: por defecto hoy; en un día pasado el bloque se tiñe y avisa */
+.cdia{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:8px 14px;border-bottom:1px solid var(--line);font-size:13px}
+.cdia label{font-weight:600}
+.cdia input{font:inherit;min-height:40px;padding:2px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.cdia button{font:inherit;font-size:12.5px;font-weight:600;min-height:40px;padding:0 12px;border:1px solid currentColor;border-radius:8px;background:none;color:var(--past-ink);cursor:pointer}
+.cdia .aviso{flex-basis:100%;margin:0;font-weight:600}
+.cdia.pasado{background:var(--past);color:var(--past-ink)}
+.cdia [hidden]{display:none}
 .ag{padding:9px 10px}
 .ag .row{display:flex;justify-content:space-between;gap:10px;font-weight:500}
 .ag .row b{font:600 12.5px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
@@ -170,6 +183,7 @@ button.chk:hover{background:var(--hot)}
   .crumbs li{min-width:0}
   .crumbs button,.crumbs [aria-current="page"]{overflow:hidden;text-overflow:ellipsis}
   .checks:not(.open) .cl,.checks:not(.open) .cnote{display:none}
+  .checks:not(.open) .cdia:not(.pasado){display:none}
   .stage{border-radius:8px}
   .site{display:none}
   .side{max-height:none}
@@ -299,7 +313,7 @@ button.chk:hover{background:var(--hot)}
 </main>
 
 <script>
-const DATA={"cfg":{"kind":"electrica","title":"Visor de planos · La Concha","site":{"name":"La Concha","sub":"C/ Jubrique 45 · Instalación eléctrica"},"obraId":"recQNYGyQ1ju7TomO","progressUrl":"https://formularioiec-bff-iec-294739714316.europe-southwest1.run.app/avance?obra=recQNYGyQ1ju7TomO","writeUrl":"https://formularioiec-bff-iec-294739714316.europe-southwest1.run.app/avance","modo":"lectura","imgV":"20261103","labels":{"l2":"Zona","l2p":"Zonas","a2":"una zona","intro0":"Cada color es una planta. Las zonas reparten cada planta por superficie."},"alt0":"Plano general con las hojas de exterior, planta baja, planta alta, sótano y anexo","checklist":[{"id":"tubo","label":"Tubo"},{"id":"caja","label":"Cajas"},{"id":"cable","label":"Cableado"},{"id":"mecanismos","label":"Mecanismos"},{"id":"luminarias","label":"Luminarias"},{"id":"cuadro","label":"Cuadro eléctrico","soloEn":[]}],"checklistProvisional":false},"buildings":[{"id":"EXT","nm":"Exterior","tipo":"EXT","col":2,"poly":[[132.1,432.2],[508.6,432.2],[508.6,165.9],[132.1,165.9]],"lab":[320.4,299.1],"img":"img/edif_EXT.webp"},{"id":"PB","nm":"Planta baja","tipo":"PB","col":1,"poly":[[674.0,322.9],[862.3,322.9],[862.3,189.8],[674.0,189.8]],"lab":[768.2,256.4],"img":"img/edif_PB.webp"},{"id":"PA","nm":"Planta alta","tipo":"PA","col":3,"poly":[[194.0,636.1],[382.2,636.1],[382.2,502.9],[194.0,502.9]],"lab":[288.1,569.5],"img":"img/edif_PA.webp"},{"id":"SOT","nm":"Sótano","tipo":"SOT","col":5,"poly":[[193.6,809.5],[334.8,809.5],[334.8,709.6],[193.6,709.6]],"lab":[264.2,759.5],"img":"img/edif_SOT.webp"},{"id":"ANX","nm":"Anexo","tipo":"ANX","col":4,"poly":[[996.3,292.8],[1090.5,292.8],[1090.5,226.3],[996.3,226.3]],"lab":[1043.4,259.6],"img":"img/edif_ANX.webp"}],"tipos":{"EXT":{"cubs":[{"id":"1","img":"img/EXT_Z1.webp","poly":[[530.1,74.3],[600.3,47.1],[839.0,42.7],[894.6,296.1],[521.5,296.1],[521.5,86.8]],"lab":[696.5,191.4],"m2":159},{"id":"2","img":"img/EXT_Z2.webp","poly":[[172.7,355.7],[377.4,265.8],[453.4,186.0],[521.5,86.8],[521.5,368.6],[183.5,368.6]],"lab":[468.4,225.9],"m2":159},{"id":"3","img":"img/EXT_Z3.webp","poly":[[183.5,368.6],[521.5,368.6],[521.5,483.6],[278.7,483.6]],"lab":[376.3,426.1],"m2":159},{"id":"4","img":"img/EXT_Z4.webp","poly":[[949.5,541.3],[521.5,541.3],[521.5,296.1],[894.6,296.1]],"lab":[721.8,418.7],"m2":159},{"id":"5","img":"img/EXT_Z5.webp","poly":[[278.7,483.6],[521.5,483.6],[521.5,776.7]],"lab":[460.8,630.2],"m2":159},{"id":"6","img":"img/EXT_Z6.webp","poly":[[665.2,668.3],[601.4,717.6],[565.1,748.9],[528.7,785.4],[521.5,776.7],[521.5,541.3],[949.5,541.3],[951.9,552.0],[842.8,583.5],[773.1,612.1],[731.8,631.7]],"lab":[610.0,650.0],"m2":159}]},"PB":{"cubs":[{"id":"1","img":"img/PB_Z1.webp","poly":[[527.2,41.5],[531.4,20.2],[654.7,24.0],[654.7,199.4],[503.1,199.4],[503.1,167.7],[497.4,163.4],[497.4,102.5],[419.4,101.0],[413.8,89.7],[490.3,89.7],[491.7,44.3]],"lab":[576.1,132.9],"m2":35},{"id":"2","img":"img/PB_Z2.webp","poly":[[654.7,24.0],[856.0,30.2],[856.0,167.7],[654.7,167.7]],"lab":[755.3,98.9],"m2":35},{"id":"3","img":"img/PB_Z3.webp","poly":[[654.7,384.8],[497.5,384.8],[503.1,377.4],[503.1,289.6],[497.4,285.3],[497.4,259.8],[503.1,255.5],[503.1,199.4],[654.7,199.4]],"lab":[578.9,333.5],"m2":35},{"id":"4","img":"img/PB_Z4.webp","poly":[[654.7,308.4],[654.7,167.7],[856.0,167.7],[856.0,308.4]],"lab":[755.3,238.1],"m2":35},{"id":"5","img":"img/PB_Z5.webp","poly":[[792.2,401.5],[792.2,472.4],[654.7,472.4],[654.7,308.4],[856.0,308.4],[856.0,395.9]],"lab":[755.3,352.1],"m2":35},{"id":"6","img":"img/PB_Z6.webp","poly":[[435.0,643.9],[430.8,703.5],[422.3,700.6],[420.9,669.5],[345.7,666.6],[347.2,532.0],[289.1,527.7],[287.6,397.3],[422.3,397.3],[419.4,405.8],[297.6,407.2],[297.6,488.0],[364.2,492.3],[357.1,496.5],[358.5,658.1],[428.0,656.7],[428.0,617.0],[435.0,612.8],[435.0,540.5],[428.0,536.2],[428.0,513.5],[496.0,510.7],[503.1,505.0],[497.5,384.8],[545.5,384.8],[545.5,643.9]],"lab":[490.3,576.6],"m2":35},{"id":"7","img":"img/PB_Z7.webp","poly":[[545.5,643.9],[545.5,384.8],[654.7,384.8],[654.7,643.9]],"lab":[600.1,514.4],"m2":35},{"id":"8","img":"img/PB_Z8.webp","poly":[[792.2,652.4],[972.2,653.9],[973.6,560.3],[984.9,557.5],[984.9,685.0],[980.7,666.6],[829.0,666.6],[816.3,687.9],[800.7,692.1],[786.5,682.2],[785.1,643.9],[654.7,643.9],[654.7,472.4],[792.2,472.4]],"lab":[723.5,602.1],"m2":35}]},"PA":{"cubs":[{"id":"1","img":"img/PA_Z1.webp","poly":[[829.9,84.5],[829.9,199.9],[606.4,199.9],[606.4,70.7],[625.8,70.4],[630.1,80.3]],"lab":[718.2,142.2],"m2":33},{"id":"2","img":"img/PA_Z2.webp","poly":[[469.9,318.6],[469.9,180.9],[535.1,176.7],[539.4,71.8],[606.4,70.7],[606.4,318.6]],"lab":[538.2,249.8],"m2":33},{"id":"3","img":"img/PA_Z3.webp","poly":[[829.9,318.6],[606.4,318.6],[606.4,199.9],[829.9,199.9]],"lab":[718.2,259.3],"m2":33},{"id":"4","img":"img/PA_Z4.webp","poly":[[535.6,508.5],[535.1,465.8],[469.9,460.2],[469.9,318.6],[625.3,318.6],[625.3,508.5]],"lab":[547.6,389.4],"m2":33},{"id":"5","img":"img/PA_Z5.webp","poly":[[761.9,461.6],[686.8,463.0],[686.2,508.5],[625.3,508.5],[625.3,318.6],[829.9,318.6],[829.9,373.7],[764.7,379.4]],"lab":[694.3,420.5],"m2":33},{"id":"6","img":"img/PA_Z6.webp","poly":[[683.9,689.8],[536.5,687.0],[542.2,607.6],[536.5,603.3],[535.6,508.5],[686.2,508.5]],"lab":[610.8,555.9],"m2":33}]},"SOT":{"cubs":[{"id":"1","img":"img/SOT_Z1.webp","poly":[[572.1,351.8],[572.1,47.3],[733.4,47.3],[733.4,351.8]],"lab":[652.7,199.5],"m2":34},{"id":"2","img":"img/SOT_Z2.webp","poly":[[935.5,192.8],[1003.5,192.8],[1003.5,334.5],[960.0,330.7],[958.1,223.0],[833.4,224.9],[832.6,351.8],[733.4,351.8],[733.4,47.3],[837.2,47.3],[842.9,109.6],[931.7,113.4]],"lab":[868.4,207.9],"m2":34},{"id":"3","img":"img/SOT_Z3.webp","poly":[[206.2,334.5],[281.8,328.8],[281.8,253.3],[442.3,253.3],[448.0,213.6],[499.0,213.6],[504.7,47.3],[572.1,47.3],[572.1,358.0],[207.0,358.0]],"lab":[537.0,130.4],"m2":34},{"id":"4","img":"img/SOT_Z4.webp","poly":[[266.6,391.2],[208.1,391.2],[207.0,358.0],[572.1,358.0],[572.1,518.4],[281.8,518.4],[281.8,398.8]],"lab":[426.9,458.6],"m2":34},{"id":"5","img":"img/SOT_Z5.webp","poly":[[831.5,515.9],[652.1,519.7],[646.4,565.0],[584.0,565.0],[582.2,774.8],[572.1,775.1],[572.1,351.8],[832.6,351.8]],"lab":[610.7,542.4],"m2":34},{"id":"6","img":"img/SOT_Z6.webp","poly":[[459.4,744.5],[404.6,740.8],[404.6,623.6],[383.8,617.9],[383.8,576.4],[281.8,570.7],[281.8,518.4],[572.1,518.4],[572.1,775.1],[465.0,778.6]],"lab":[488.3,682.2],"m2":34}]},"ANX":{"cubs":[{"id":"1","img":"img/ANX_Z1.webp","poly":[[877.6,439.7],[460.8,439.7],[459.3,336.9],[535.9,328.4],[538.7,147.0],[748.5,141.3],[757.0,127.1],[768.3,141.3],[870.4,141.3]],"lab":[705.0,237.7],"m2":34},{"id":"2","img":"img/ANX_Z2.webp","poly":[[878.9,492.8],[895.9,501.3],[895.9,518.4],[825.0,526.9],[825.0,722.5],[465.0,728.1],[460.8,439.7],[877.6,439.7]],"lab":[644.3,624.7],"m2":34}]}}};
+const DATA={"cfg":{"kind":"electrica","title":"Visor de planos · La Concha","site":{"name":"La Concha","sub":"C/ Jubrique 45 · Instalación eléctrica"},"obraId":"recQNYGyQ1ju7TomO","progressUrl":"https://formularioiec-bff-iec-294739714316.europe-southwest1.run.app/avance?obra=recQNYGyQ1ju7TomO","writeUrl":"https://formularioiec-bff-iec-294739714316.europe-southwest1.run.app/avance","modo":"escritura","imgV":"20261103","labels":{"l2":"Zona","l2p":"Zonas","a2":"una zona","intro0":"Cada color es una planta. Las zonas reparten cada planta por superficie."},"alt0":"Plano general con las hojas de exterior, planta baja, planta alta, sótano y anexo","checklist":[{"id":"tubo","label":"Tubo"},{"id":"caja","label":"Cajas"},{"id":"cable","label":"Cableado"},{"id":"mecanismos","label":"Mecanismos"},{"id":"luminarias","label":"Luminarias"},{"id":"cuadro","label":"Cuadro eléctrico","soloEn":[]}],"checklistProvisional":false},"buildings":[{"id":"EXT","nm":"Exterior","tipo":"EXT","col":2,"poly":[[132.1,432.2],[508.6,432.2],[508.6,165.9],[132.1,165.9]],"lab":[320.4,299.1],"img":"img/edif_EXT.webp"},{"id":"PB","nm":"Planta baja","tipo":"PB","col":1,"poly":[[674.0,322.9],[862.3,322.9],[862.3,189.8],[674.0,189.8]],"lab":[768.2,256.4],"img":"img/edif_PB.webp"},{"id":"PA","nm":"Planta alta","tipo":"PA","col":3,"poly":[[194.0,636.1],[382.2,636.1],[382.2,502.9],[194.0,502.9]],"lab":[288.1,569.5],"img":"img/edif_PA.webp"},{"id":"SOT","nm":"Sótano","tipo":"SOT","col":5,"poly":[[193.6,809.5],[334.8,809.5],[334.8,709.6],[193.6,709.6]],"lab":[264.2,759.5],"img":"img/edif_SOT.webp"},{"id":"ANX","nm":"Anexo","tipo":"ANX","col":4,"poly":[[996.3,292.8],[1090.5,292.8],[1090.5,226.3],[996.3,226.3]],"lab":[1043.4,259.6],"img":"img/edif_ANX.webp"}],"tipos":{"EXT":{"cubs":[{"id":"1","img":"img/EXT_Z1.webp","poly":[[530.1,74.3],[600.3,47.1],[839.0,42.7],[894.6,296.1],[521.5,296.1],[521.5,86.8]],"lab":[696.5,191.4],"m2":159},{"id":"2","img":"img/EXT_Z2.webp","poly":[[172.7,355.7],[377.4,265.8],[453.4,186.0],[521.5,86.8],[521.5,368.6],[183.5,368.6]],"lab":[468.4,225.9],"m2":159},{"id":"3","img":"img/EXT_Z3.webp","poly":[[183.5,368.6],[521.5,368.6],[521.5,483.6],[278.7,483.6]],"lab":[376.3,426.1],"m2":159},{"id":"4","img":"img/EXT_Z4.webp","poly":[[949.5,541.3],[521.5,541.3],[521.5,296.1],[894.6,296.1]],"lab":[721.8,418.7],"m2":159},{"id":"5","img":"img/EXT_Z5.webp","poly":[[278.7,483.6],[521.5,483.6],[521.5,776.7]],"lab":[460.8,630.2],"m2":159},{"id":"6","img":"img/EXT_Z6.webp","poly":[[665.2,668.3],[601.4,717.6],[565.1,748.9],[528.7,785.4],[521.5,776.7],[521.5,541.3],[949.5,541.3],[951.9,552.0],[842.8,583.5],[773.1,612.1],[731.8,631.7]],"lab":[610.0,650.0],"m2":159}]},"PB":{"cubs":[{"id":"1","img":"img/PB_Z1.webp","poly":[[527.2,41.5],[531.4,20.2],[654.7,24.0],[654.7,199.4],[503.1,199.4],[503.1,167.7],[497.4,163.4],[497.4,102.5],[419.4,101.0],[413.8,89.7],[490.3,89.7],[491.7,44.3]],"lab":[576.1,132.9],"m2":35},{"id":"2","img":"img/PB_Z2.webp","poly":[[654.7,24.0],[856.0,30.2],[856.0,167.7],[654.7,167.7]],"lab":[755.3,98.9],"m2":35},{"id":"3","img":"img/PB_Z3.webp","poly":[[654.7,384.8],[497.5,384.8],[503.1,377.4],[503.1,289.6],[497.4,285.3],[497.4,259.8],[503.1,255.5],[503.1,199.4],[654.7,199.4]],"lab":[578.9,333.5],"m2":35},{"id":"4","img":"img/PB_Z4.webp","poly":[[654.7,308.4],[654.7,167.7],[856.0,167.7],[856.0,308.4]],"lab":[755.3,238.1],"m2":35},{"id":"5","img":"img/PB_Z5.webp","poly":[[792.2,401.5],[792.2,472.4],[654.7,472.4],[654.7,308.4],[856.0,308.4],[856.0,395.9]],"lab":[755.3,352.1],"m2":35},{"id":"6","img":"img/PB_Z6.webp","poly":[[435.0,643.9],[430.8,703.5],[422.3,700.6],[420.9,669.5],[345.7,666.6],[347.2,532.0],[289.1,527.7],[287.6,397.3],[422.3,397.3],[419.4,405.8],[297.6,407.2],[297.6,488.0],[364.2,492.3],[357.1,496.5],[358.5,658.1],[428.0,656.7],[428.0,617.0],[435.0,612.8],[435.0,540.5],[428.0,536.2],[428.0,513.5],[496.0,510.7],[503.1,505.0],[497.5,384.8],[545.5,384.8],[545.5,643.9]],"lab":[490.3,576.6],"m2":35},{"id":"7","img":"img/PB_Z7.webp","poly":[[545.5,643.9],[545.5,384.8],[654.7,384.8],[654.7,643.9]],"lab":[600.1,514.4],"m2":35},{"id":"8","img":"img/PB_Z8.webp","poly":[[792.2,652.4],[972.2,653.9],[973.6,560.3],[984.9,557.5],[984.9,685.0],[980.7,666.6],[829.0,666.6],[816.3,687.9],[800.7,692.1],[786.5,682.2],[785.1,643.9],[654.7,643.9],[654.7,472.4],[792.2,472.4]],"lab":[723.5,602.1],"m2":35}]},"PA":{"cubs":[{"id":"1","img":"img/PA_Z1.webp","poly":[[829.9,84.5],[829.9,199.9],[606.4,199.9],[606.4,70.7],[625.8,70.4],[630.1,80.3]],"lab":[718.2,142.2],"m2":33},{"id":"2","img":"img/PA_Z2.webp","poly":[[469.9,318.6],[469.9,180.9],[535.1,176.7],[539.4,71.8],[606.4,70.7],[606.4,318.6]],"lab":[538.2,249.8],"m2":33},{"id":"3","img":"img/PA_Z3.webp","poly":[[829.9,318.6],[606.4,318.6],[606.4,199.9],[829.9,199.9]],"lab":[718.2,259.3],"m2":33},{"id":"4","img":"img/PA_Z4.webp","poly":[[535.6,508.5],[535.1,465.8],[469.9,460.2],[469.9,318.6],[625.3,318.6],[625.3,508.5]],"lab":[547.6,389.4],"m2":33},{"id":"5","img":"img/PA_Z5.webp","poly":[[761.9,461.6],[686.8,463.0],[686.2,508.5],[625.3,508.5],[625.3,318.6],[829.9,318.6],[829.9,373.7],[764.7,379.4]],"lab":[694.3,420.5],"m2":33},{"id":"6","img":"img/PA_Z6.webp","poly":[[683.9,689.8],[536.5,687.0],[542.2,607.6],[536.5,603.3],[535.6,508.5],[686.2,508.5]],"lab":[610.8,555.9],"m2":33}]},"SOT":{"cubs":[{"id":"1","img":"img/SOT_Z1.webp","poly":[[572.1,351.8],[572.1,47.3],[733.4,47.3],[733.4,351.8]],"lab":[652.7,199.5],"m2":34},{"id":"2","img":"img/SOT_Z2.webp","poly":[[935.5,192.8],[1003.5,192.8],[1003.5,334.5],[960.0,330.7],[958.1,223.0],[833.4,224.9],[832.6,351.8],[733.4,351.8],[733.4,47.3],[837.2,47.3],[842.9,109.6],[931.7,113.4]],"lab":[868.4,207.9],"m2":34},{"id":"3","img":"img/SOT_Z3.webp","poly":[[206.2,334.5],[281.8,328.8],[281.8,253.3],[442.3,253.3],[448.0,213.6],[499.0,213.6],[504.7,47.3],[572.1,47.3],[572.1,358.0],[207.0,358.0]],"lab":[537.0,130.4],"m2":34},{"id":"4","img":"img/SOT_Z4.webp","poly":[[266.6,391.2],[208.1,391.2],[207.0,358.0],[572.1,358.0],[572.1,518.4],[281.8,518.4],[281.8,398.8]],"lab":[426.9,458.6],"m2":34},{"id":"5","img":"img/SOT_Z5.webp","poly":[[831.5,515.9],[652.1,519.7],[646.4,565.0],[584.0,565.0],[582.2,774.8],[572.1,775.1],[572.1,351.8],[832.6,351.8]],"lab":[610.7,542.4],"m2":34},{"id":"6","img":"img/SOT_Z6.webp","poly":[[459.4,744.5],[404.6,740.8],[404.6,623.6],[383.8,617.9],[383.8,576.4],[281.8,570.7],[281.8,518.4],[572.1,518.4],[572.1,775.1],[465.0,778.6]],"lab":[488.3,682.2],"m2":34}]},"ANX":{"cubs":[{"id":"1","img":"img/ANX_Z1.webp","poly":[[877.6,439.7],[460.8,439.7],[459.3,336.9],[535.9,328.4],[538.7,147.0],[748.5,141.3],[757.0,127.1],[768.3,141.3],[870.4,141.3]],"lab":[705.0,237.7],"m2":34},{"id":"2","img":"img/ANX_Z2.webp","poly":[[878.9,492.8],[895.9,501.3],[895.9,518.4],[825.0,526.9],[825.0,722.5],[465.0,728.1],[460.8,439.7],[877.6,439.7]],"lab":[644.3,624.7],"m2":34}]}}};
 (()=>{
 addEventListener('error',()=>{const l=document.getElementById('loading'); if(l&&l.isConnected) l.textContent='Este navegador no puede abrir el visor. Actualízalo o prueba con Chrome o Safari recientes.';});
 const SW=1191, SH=842, NS='http://www.w3.org/2000/svg';
@@ -414,10 +428,18 @@ async function loadProgress(){
 const QKEY='iec-cola:'+(CFG.obraId||location.pathname);
 let QUEUE=[]; try{ QUEUE=JSON.parse(localStorage.getItem(QKEY)||'[]'); if(!Array.isArray(QUEUE)) QUEUE=[]; }catch(e){ QUEUE=[]; }
 let AUTHFAIL=false, flushing=false;
+let QFAIL=false;   // el último intento de envío falló (sin conexión o servidor caído): «Sin enviar»; si no, «Enviando…»
+/* día del trabajo: el de hoy salvo que se elija otro (hasta 30 días atrás, nunca futuro). No se guarda: al abrir el
+   plano vuelve a hoy. null = hoy, así un plano abierto a medianoche pasa solo al día nuevo. */
+const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const HOY=()=>ymd(new Date());
+const MIN_DIA=()=>{ const d=new Date(); d.setDate(d.getDate()-30); return ymd(d); };
+let diaElegido=null;
+const DIA=()=>(diaElegido&&diaElegido>=MIN_DIA()&&diaElegido<HOY())?diaElegido:HOY();
 const saveQ=()=>{ try{ localStorage.setItem(QKEY,JSON.stringify(QUEUE)); }catch(e){} };
 const isPend=(b,c,k)=>QUEUE.some(q=>q.zona===PKEY(b,c)&&q.check===k);
 function applyQueue(){ for(const q of QUEUE){ const z=PROG.zones[q.zona]||(PROG.zones[q.zona]={});
-  z[q.check]=q.done?{done:true,by:(AUTH()&&AUTH().iniciales)||'',date:(q.ts||'').slice(0,10)}:{done:false}; } }
+  z[q.check]=q.done?{done:true,by:(AUTH()&&AUTH().iniciales)||'',date:q.fecha||(q.ts||'').slice(0,10)}:{done:false}; } }
 async function flushQ(){
   if(!WRITE||flushing||!QUEUE.length||!AUTH()) return; flushing=true;
   try{
@@ -425,17 +447,22 @@ async function flushQ(){
       const t=await tok(); if(!t){ AUTHFAIL=true; break; }
       const r=await fetch(CFG.writeUrl,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify(QUEUE[0])});
       if(r.status===401||r.status===403){ AUTHFAIL=true; break; }
-      if(r.status>=500||r.status===429) break;          // fallo temporal: se reintenta más tarde
-      AUTHFAIL=false; QUEUE.shift(); saveQ();            // aceptado (o rechazado por datos inválidos: no se reintenta)
+      if(r.status>=500||r.status===429){ QFAIL=true; break; }   // fallo temporal: se reintenta más tarde
+      AUTHFAIL=false; QFAIL=false; QUEUE.shift(); saveQ();      // aceptado (o rechazado por datos inválidos: no se reintenta)
+      refreshProg();
     }
-  }catch(e){ /* sin conexión: se reintenta */ }
+  }catch(e){ QFAIL=true; /* sin conexión: se reintenta */ }
   flushing=false; saveQ(); refreshProg();
 }
 function toggleCheck(b,c,id){
   if(!CAN()) return;
   const key=PKEY(b,c), z=PROG.zones[key]||(PROG.zones[key]={}), d=!isDone(b,c,id), now=new Date().toISOString();
-  if(DEMO){ z[id]=d?{done:true,by:'Demo',date:now.slice(0,10)}:{done:false}; saveLocal(); }
-  else { QUEUE.push({external_id:[CFG.obraId||'',key,id,now].join('|'),obra:CFG.obraId||'',zona:key,check:id,done:d,ts:now}); saveQ(); applyQueue(); flushQ(); }
+  const fecha=DIA();
+  if(DEMO){ z[id]=d?{done:true,by:'Demo',date:fecha}:{done:false}; saveLocal(); }
+  else {
+    QUEUE.push({external_id:[CFG.obraId||'',key,id,now].join('|'),obra:CFG.obraId||'',zona:key,check:id,done:d,ts:now,fecha});
+    saveQ(); applyQueue(); if(navigator.onLine!==false) QFAIL=false; flushQ();
+  }
   PROG.updated=now; refreshProg();
 }
 
@@ -582,7 +609,8 @@ function updateBars(){ if(!cur||!CL.length) return;
   for(const z of cur.data){ const g=cur.zones[z.id]; if(!g||!z.pct) continue; const f=g.querySelector('.pgf'), bg=g.querySelector('.pgbg');
     if(f&&bg) f.setAttribute('width',(+bg.getAttribute('width'))*z.pct()/100);
     if(z.single) g.classList.toggle('done',z.pct()===100); } }
-function refreshProg(){ if(!view||busy) return; render(); updateBars(); }
+// Con el calendario del «Día del trabajo» abierto no se repinta: lo cerraría (se repinta al salir de él).
+function refreshProg(){ if(!view||busy) return; const a=document.activeElement; if(a&&a.id==='cdia-in') return; render(); updateBars(); }
 const fmtDate=s=>{ if(!s) return ''; const d=new Date(s.length<=10?s+'T12:00:00':s); return isNaN(d)?'':d.toLocaleDateString('es-ES',{day:'numeric',month:'short'}); };
 const fmtStamp=s=>{ const d=new Date(s); return isNaN(d)?'':d.toLocaleString('es-ES',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); };
 function up(){ if(!view||view.lvl===0) return; if(view.lvl===2) go({lvl:1,b:view.b},'out',bboxOfCub(view)); else go({lvl:0},'out',bboxOfBuilding(view.b)); }
@@ -645,6 +673,27 @@ cclose.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 ['pointerdown','pointerup','pointercancel','dblclick','wheel','click'].forEach(t=>{ checks.addEventListener(t,e=>e.stopPropagation(),{passive:true}); cpill.addEventListener(t,e=>e.stopPropagation(),{passive:true}); });
 const ICON_OK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const ICON_CH='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>';
+/* selector «Día del trabajo»: un solo elemento que se reutiliza en cada repintado del panel */
+const cdia=document.createElement('div'); cdia.className='cdia';
+const dlab=document.createElement('label'); dlab.htmlFor='cdia-in'; dlab.textContent='Día del trabajo';
+const din=document.createElement('input'); din.type='date'; din.id='cdia-in';
+const dhoy=document.createElement('button'); dhoy.type='button'; dhoy.textContent='Volver a hoy';
+const dav=document.createElement('p'); dav.className='aviso'; dav.setAttribute('role','status');
+cdia.append(dlab,din,dhoy,dav);
+const fmtLargo=s=>new Date(s+'T12:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+function syncDia(){
+  const d=DIA(), h=HOY(), pasado=d!==h;
+  din.min=MIN_DIA(); din.max=h; if(document.activeElement!==din) din.value=d;
+  cdia.classList.toggle('pasado',pasado); dhoy.hidden=!pasado; dav.hidden=!pasado;
+  dav.textContent=pasado?`Estás marcando checks del ${fmtLargo(d)}.`:'';
+}
+din.addEventListener('change',()=>{
+  const v=din.value, h=HOY();
+  if(!v||v>=h) diaElegido=null; else if(v>=MIN_DIA()) diaElegido=v;   // fuera de rango: se queda el que había
+  din.value=DIA(); syncDia();
+});
+din.addEventListener('blur',()=>refreshProg());
+dhoy.addEventListener('click',()=>{ diaElegido=null; syncDia(); refreshProg(); });
 function renderChecks(){
   if(!CL.length||!view){ checks.hidden=true; cpill.hidden=true; return; }
   checks.hidden=false; cpill.hidden=false;
@@ -662,7 +711,8 @@ function renderChecks(){
     el.setAttribute('role','checkbox'); el.setAttribute('aria-checked',d); if(edit){ el.type='button'; el.addEventListener('click',()=>toggleCheck(zb,zc,id)); } else el.setAttribute('aria-readonly','true');
     const box=document.createElement('span'); box.className='box'; box.innerHTML=ICON_OK;
     const tx=document.createElement('span'); const l=document.createElement('span'); l.className='lbl'; l.textContent=label; tx.appendChild(l);
-    const meta=isPend(zb,zc,id)?'Sin enviar':(d?(CAPAS?join(s.date?'Completado el '+fmtDate(s.date):'Completado',s.by):join(s.by,fmtDate(s.date))):''); if(meta){ const w=document.createElement('span'); w.className='who'; w.textContent=meta; tx.appendChild(w); }
+    const pend=isPend(zb,zc,id), env=pend&&!QFAIL&&!AUTHFAIL;
+    const meta=pend?(env?'Enviando…':'Sin enviar'):(d?(CAPAS?join(s.date?'Completado el '+fmtDate(s.date):'Completado',s.by):join(s.by,fmtDate(s.date))):''); if(meta){ const w=document.createElement('span'); w.className='who'+(env?' env':''); w.textContent=meta; if(env) w.setAttribute('role','status'); tx.appendChild(w); }
     el.append(box,tx); li.appendChild(el); body.appendChild(li);
   };
   const aggRow=(label,dn,n,cur_)=>{
@@ -716,14 +766,16 @@ function renderChecks(){
   const prov=CFG.checklistProvisional?'Checklist provisional. ':'';
   const wmsg=!WRITE?'':AUTHFAIL?'La sesión ha caducado: vuelve a abrir el plano desde la App IEC para guardar.'
     :!AUTH()?'Solo lectura: abre el plano desde la App IEC para marcar los checks.'
-    :QUEUE.length?`${QUEUE.length} ${QUEUE.length===1?'cambio sin enviar':'cambios sin enviar'}; se enviarán al recuperar la conexión.`:'';
+    :QUEUE.length&&QFAIL?`${QUEUE.length} ${QUEUE.length===1?'cambio sin enviar':'cambios sin enviar'}; se enviarán al recuperar la conexión.`:'';
   if(prov||PROG.error||wmsg) note.classList.add('warn');
+  const emsg=WRITE&&QUEUE.length&&!QFAIL&&!AUTHFAIL&&AUTH()?`Enviando ${QUEUE.length===1?'1 cambio':QUEUE.length+' cambios'}…`:'';
   checks.classList.toggle('edit',CAN());
-  note.textContent=prov+(wmsg||(PROG.error?'No se pudo leer el avance; se reintentará en un minuto.'
+  note.textContent=prov+(wmsg||emsg||(PROG.error?'No se pudo leer el avance; se reintentará en un minuto.'
     :DEMO?'Modo demostración: los checks se guardan solo en este navegador.'
     :WRITE?(PROG.updated?`Última actualización: ${fmtStamp(PROG.updated)}. Toca un check para marcarlo; se guarda en Airtable.`:'Toca un check para marcarlo; se guarda en Airtable.')
     :PROG.updated?`Última actualización: ${fmtStamp(PROG.updated)}. Los checks se rellenan desde la App IEC.`:'Todavía no hay registros. Los checks se rellenan desde la App IEC.'));
-  checks.replaceChildren(head,body,note,cclose);
+  if(CAN()){ syncDia(); checks.replaceChildren(head,cdia,body,note,cclose); }
+  else checks.replaceChildren(head,body,note,cclose);
 }
 
 const fsnav=document.getElementById('fsnav'), fsmenu=document.getElementById('fsmenu'), fstog=document.getElementById('fstog'), fstxt=document.getElementById('fstxt'), fsback=document.getElementById('fsback');
