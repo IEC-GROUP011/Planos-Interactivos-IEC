@@ -205,7 +205,7 @@ button.chk:hover{background:var(--hot)}
 /* Móvil en horizontal (pantalla baja): checks fijos a la izquierda, plano ancho y navegación de zonas dentro del plano */
 @media (orientation:landscape) and (max-height:520px){
   /* en horizontal el panel enseña la lista aunque no esté «abierto»: el día del trabajo también, más compacto */
-  .checks:not(.open) .cdia{display:flex}
+  .checks:not(.open) .cdia:not(.pasado){display:flex}
   .cdia{padding:4px 10px;gap:4px 8px;font-size:12px}
   .cdia input,.cdia button{min-height:36px}
   body{gap:4px}
@@ -251,7 +251,7 @@ button.chk:hover{background:var(--hot)}
 .checks.ovl{position:absolute;left:max(8px,env(safe-area-inset-left,0px));top:max(8px,env(safe-area-inset-top,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));width:min(280px,calc(100% - 80px));z-index:6;box-shadow:var(--shadow);max-height:none;order:0;touch-action:pan-y;cursor:default}
 .checks.ovl:not(.show){display:none}
 .checks.ovl .cl,.checks.ovl .cnote{display:block}
-.checks.ovl .cdia{display:flex}
+.checks.ovl .cdia:not(.pasado),.checks.ovl .cdia{display:flex}
 .checks.ovl .chead{cursor:default;padding-right:52px}
 .checks.ovl .chead .chev{display:none}
 .checks.ovl .cclose{display:grid;place-items:center;position:absolute;top:2px;right:2px;width:44px;height:44px;border:0;border-radius:10px;background:none;cursor:pointer;color:var(--muted)}
