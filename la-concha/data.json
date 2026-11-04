@@ -10,12 +10,12 @@
   "progressUrl": "https://formularioiec-bff-iec-294739714316.europe-southwest1.run.app/avance?obra=recQNYGyQ1ju7TomO",
   "writeUrl": "https://formularioiec-bff-iec-294739714316.europe-southwest1.run.app/avance",
   "modo": "escritura",
-  "imgV": "20261104",
+  "imgV": "20261104b",
   "labels": {
    "l2": "Zona",
    "l2p": "Zonas",
    "a2": "una zona",
-   "intro0": "Cada color es una planta. Las zonas reparten cada planta por superficie; el exterior va en dos zonas (norte y sur) y lo ya dibujado en planta baja y anexo se ve atenuado."
+   "intro0": "Cada color es una planta. Las zonas reparten cada planta por superficie; el exterior va en dos zonas (oeste y este) y lo ya dibujado en planta baja y anexo se ve atenuado."
   },
   "alt0": "Plano general con las hojas de exterior, planta baja, planta alta, sótano y anexo",
   "checklist": [
@@ -202,6 +202,22 @@
      "img": "img/EXT_Z1.webp",
      "poly": [
       [
+       665.2,
+       668.3
+      ],
+      [
+       601.4,
+       717.6
+      ],
+      [
+       565.1,
+       748.9
+      ],
+      [
+       528.7,
+       785.4
+      ],
+      [
        172.7,
        355.7
       ],
@@ -222,51 +238,27 @@
        47.1
       ],
       [
-       839.0,
-       42.7
+       708.6,
+       45.1
       ],
       [
-       910.9,
-       369.1
-      ],
-      [
-       183.9,
-       369.1
+       708.6,
+       644.1
       ]
      ],
      "lab": [
-      527.0,
-      210.9
+      378.0,
+      405.0
      ],
-     "m2": 496
+     "m2": 860
     },
     {
      "id": "2",
      "img": "img/EXT_Z2.webp",
      "poly": [
       [
-       665.2,
-       668.3
-      ],
-      [
-       601.4,
-       717.6
-      ],
-      [
-       565.1,
-       748.9
-      ],
-      [
-       528.7,
-       785.4
-      ],
-      [
-       183.9,
-       369.1
-      ],
-      [
-       910.9,
-       369.1
+       839.0,
+       42.7
       ],
       [
        951.9,
@@ -281,15 +273,19 @@
        612.1
       ],
       [
-       731.8,
-       631.7
+       708.6,
+       644.1
+      ],
+      [
+       708.6,
+       45.1
       ]
      ],
      "lab": [
-      457.8,
-      520.1
+      794.3,
+      515.1
      ],
-     "m2": 767
+     "m2": 404
     }
    ]
   },
