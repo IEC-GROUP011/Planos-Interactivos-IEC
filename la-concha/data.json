@@ -10,12 +10,12 @@
   "progressUrl": "https://formularioiec-bff-iec-294739714316.europe-southwest1.run.app/avance?obra=recQNYGyQ1ju7TomO",
   "writeUrl": "https://formularioiec-bff-iec-294739714316.europe-southwest1.run.app/avance",
   "modo": "escritura",
-  "imgV": "20261104c",
+  "imgV": "20261105a",
   "labels": {
    "l2": "Zona",
    "l2p": "Zonas",
    "a2": "una zona",
-   "intro0": "Cada color es una planta. Las zonas reparten cada planta por superficie; el exterior accesible va en dos zonas (norte y sur del jardín oeste) y lo ya dibujado en planta baja y anexo se ve atenuado."
+   "intro0": "Cada color es una planta. El exterior accesible es una sola zona (todo el jardín oeste) y lo ya dibujado en planta baja y anexo se ve atenuado."
   },
   "alt0": "Plano general con las hojas de exterior, planta baja, planta alta, sótano y anexo",
   "checklist": [
@@ -198,8 +198,8 @@
   "EXT": {
    "cubs": [
     {
-     "id": "1",
-     "img": "img/EXT_Z1.webp",
+     "id": "Exterior",
+     "img": "img/edif_EXT.webp",
      "poly": [
       [
        172.7,
@@ -223,25 +223,6 @@
       ],
       [
        552.7,
-       369.1
-      ],
-      [
-       183.9,
-       369.1
-      ]
-     ],
-     "lab": [
-      430.5,
-      304.4
-     ],
-     "m2": 226
-    },
-    {
-     "id": "2",
-     "img": "img/EXT_Z2.webp",
-     "poly": [
-      [
-       552.7,
        761.1
       ],
       [
@@ -251,17 +232,13 @@
       [
        183.9,
        369.1
-      ],
-      [
-       552.7,
-       369.1
       ]
      ],
      "lab": [
-      427.5,
-      485.9
+      400,
+      400
      ],
-     "m2": 400
+     "m2": 626
     }
    ]
   },
