@@ -28,6 +28,7 @@
 - `imgV`: versión de las imágenes (p. ej. `"20261027"`); se añade como `?v=` a las URL para que nadie vea planos viejos en caché. Cambiarla cada vez que se sustituyan planos.
 - `nm` (opcional, en cada edificio/planta): nombre visible (p. ej. `"nm": "Planta baja"` con `id: "PB"`); sin él se muestra `<l1> <id>`.
 - Checks con `soloEn` (p. ej. `{"id": "cuadro", "label": "Cuadro eléctrico", "soloEn": ["PB/3"]}`): solo salen y cuentan en esas zonas (`<planta>/<zona>`).
+- `detalleZoom: true` (solo sin capas): el último nivel no usa una imagen de detalle por zona; amplía la hoja de la planta sobre la zona (que queda marcada). Pensado para planos de alta resolución (p. ej. 3000 px renderizados desde el DXF) con zonas por estancia; en la planta las etiquetas que se pisan se ocultan hasta acercar el plano o pasar el ratón. Los ids de zona (nombre de la estancia) son la clave de los checks: no renombrarlos una vez haya avance registrado.
 - `checklist: false` desactiva el panel de checks. Sin `progressUrl` el panel se muestra sin avance.
 - Imágenes: hoja A3 de 1191×842 (coordenadas de zonas en esos puntos), en `img/`.
 - Enlaces profundos: `#e<nivel1>` y `#e<nivel1>_c<nivel2>` (p. ej. `#eP.S._cCINE`).
