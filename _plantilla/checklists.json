@@ -6,6 +6,7 @@
     "provisional": false,
     "nivel": "cubierta",
     "checks": [
+      {"id": "replanteo", "label": "Replanteo", "nivel_tipico": "cubierta"},
       {"id": "estructura", "label": "Estructura", "nivel_tipico": "cubierta"},
       {"id": "optimizadores", "label": "Optimizadores", "nivel_tipico": "cubierta"},
       {"id": "paneles", "label": "Paneles", "nivel_tipico": "cubierta"},
@@ -25,6 +26,10 @@
     "provisional": false,
     "nivel": "estancia",
     "checks": [
+      {
+        "id": "replanteo",
+        "label": "Replanteo"
+      },
       {
         "id": "tubo",
         "label": "Tubo"

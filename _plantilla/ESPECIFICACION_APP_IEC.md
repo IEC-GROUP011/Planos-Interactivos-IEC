@@ -9,7 +9,7 @@ Estado: **propuesta** (29/10/2026). El checklist **eléctrico** es el dado por I
 
 ## 1. Checklists (fuente única: `_plantilla/checklists.json`)
 - Fotovoltaica (provisional, borrador de la pizarra): Replanteo, Perforaciones + pernos, Estructura, Cableado (optimizadores), Paneles. Pendiente confirmar el «opt» de la pizarra.
-- Eléctrica (dada por IEC, 29/10/2026): Tubo, Caja, Cable, Mecanismos, Embellecedores, Luminarias, Cajetines.
+- Eléctrica (dada por IEC, 29/10/2026; Replanteo añadido el 06/11/2026): Replanteo, Tubo, Caja, Cable, Mecanismos, Embellecedores, Luminarias, Cajetines.
 - Se marcan en el **nivel más concreto**: cubierta (FV) o estancia (eléctrica). El avance de edificio/planta y el total de la obra se calculan sumando.
 - Los nombres de zona (edificios, plantas, cubiertas, estancias) **no están fijados aquí**: salen de los planos de cada proyecto. Los de los ejemplos (Cine, Hall…) son solo ilustrativos.
 - Mientras el checklist esté por determinar, se puede cambiar libremente; una vez haya registros en Airtable, los `id` de los checks no se cambian (solo se añaden o se renombran etiquetas).

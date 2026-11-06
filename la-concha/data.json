@@ -17,6 +17,10 @@
   "alt0": "Plano general con las hojas de exterior, planta baja, planta alta, sótano y anexo",
   "checklist": [
    {
+    "id": "replanteo",
+    "label": "Replanteo"
+   },
+   {
     "id": "tubo",
     "label": "Tubo"
    },
