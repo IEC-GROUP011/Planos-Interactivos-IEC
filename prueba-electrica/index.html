@@ -276,6 +276,8 @@ button.chk:hover{background:var(--hot)}
 .lvl0.marcos .zone polygon{stroke-opacity:.95;stroke-width:2.2;fill-opacity:.07}
 .zone.done polygon{fill:var(--ok);fill-opacity:.2}
 .zone.mark{pointer-events:none}
+.zone.lbl-off .tag{opacity:0}
+.zone.lbl-off.hot .tag,.zone.lbl-off.sel .tag,.zone.lbl-off:focus-visible .tag{opacity:1}
 .zone.mark polygon{fill-opacity:.08;stroke-width:3.5}
 /* selección de varias zonas (mantener pulsada una zona): sin menú ni selección de texto del móvil al mantener */
 .zone{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
@@ -325,7 +327,7 @@ button.chk:hover{background:var(--hot)}
 </main>
 
 <script>
-const DATA={"cfg":{"kind":"electrica","title":"PRUEBA · Visor de planos · Ejemplo eléctrico","site":{"name":"Ejemplo eléctrico","sub":"Instalación eléctrica · planos inventados"},"obraId":"78127e08-1f39-46ae-be68-5806b77a52bc","progressUrl":"https://formularioiec-bff-iec-294739714316.europe-southwest1.run.app/avance?obra=78127e08-1f39-46ae-be68-5806b77a52bc","writeUrl":"https://formularioiec-bff-iec-294739714316.europe-southwest1.run.app/avance","modo":"escritura","checklist":[{"id":"tubo","label":"Tubo"},{"id":"caja","label":"Caja"},{"id":"cable","label":"Cable"},{"id":"mecanismos","label":"Mecanismos"},{"id":"embellecedores","label":"Embellecedores"},{"id":"luminarias","label":"Luminarias"},{"id":"cajetines","label":"Cajetines"}],"checklistProvisional":false},"buildings":[{"id":"P.B.","tipo":"PB","col":1,"poly":[[140,130],[560,130],[560,330],[140,330]],"lab":[350.0,230.0]},{"id":"P.A.","tipo":"PA","col":2,"poly":[[640,130],[1060,130],[1060,330],[640,330]],"lab":[850.0,230.0]},{"id":"P.S.","tipo":"PS","col":3,"poly":[[140,450],[560,450],[560,650],[140,650]],"lab":[350.0,550.0]},{"id":"Anexo","tipo":"AN","col":4,"poly":[[640,450],[1060,450],[1060,650],[640,650]],"lab":[850.0,550.0]}],"tipos":{"PB":{"cubs":[{"id":"RECIBIDOR","img":"img/PB_RECIBIDOR.webp","poly":[[140,160],[480,160],[480,640],[140,640]],"lab":[310.0,400.0]},{"id":"COCINA","img":"img/PB_COCINA.webp","poly":[[480,160],[820,160],[820,640],[480,640]],"lab":[650.0,400.0]},{"id":"GARAJE","img":"img/PB_GARAJE.webp","poly":[[820,160],[1060,160],[1060,640],[820,640]],"lab":[940.0,400.0]}]},"PA":{"cubs":[{"id":"DORM1","img":"img/PA_DORM1.webp","poly":[[140,160],[480,160],[480,640],[140,640]],"lab":[310.0,400.0]},{"id":"DORM2","img":"img/PA_DORM2.webp","poly":[[480,160],[820,160],[820,640],[480,640]],"lab":[650.0,400.0]},{"id":"BANO","img":"img/PA_BANO.webp","poly":[[820,160],[1060,160],[1060,640],[820,640]],"lab":[940.0,400.0]}]},"PS":{"cubs":[{"id":"CINE","img":"img/PS_CINE.webp","poly":[[400,150],[800,150],[800,300],[400,300]],"lab":[600.0,225.0]},{"id":"HALL","img":"img/PS_HALL.webp","poly":[[330,300],[870,300],[870,440],[330,440]],"lab":[600.0,370.0]},{"id":"SAUNA","img":"img/PS_SAUNA.webp","poly":[[140,440],[560,440],[560,640],[140,640]],"lab":[350.0,540.0]},{"id":"SALON","img":"img/PS_SALON.webp","poly":[[560,440],[930,440],[930,640],[560,640]],"lab":[745.0,540.0]},{"id":"CGMP","img":"img/PS_CGMP.webp","poly":[[930,520],[1080,520],[1080,720],[930,720]],"lab":[1005.0,620.0]}]},"AN":{"cubs":[{"id":"TRASTERO","img":"img/AN_TRASTERO.webp","poly":[[140,160],[600,160],[600,640],[140,640]],"lab":[370.0,400.0]},{"id":"TALLER","img":"img/AN_TALLER.webp","poly":[[600,160],[1060,160],[1060,640],[600,640]],"lab":[830.0,400.0]}]}}};
+const DATA={"cfg":{"kind":"electrica","title":"PRUEBA · Visor de planos · Ejemplo eléctrico","site":{"name":"Ejemplo eléctrico","sub":"Instalación eléctrica · planos inventados"},"obraId":"78127e08-1f39-46ae-be68-5806b77a52bc","progressUrl":"https://formularioiec-bff-iec-294739714316.europe-southwest1.run.app/avance?obra=78127e08-1f39-46ae-be68-5806b77a52bc","writeUrl":"https://formularioiec-bff-iec-294739714316.europe-southwest1.run.app/avance","modo":"escritura","checklist":[{"id":"replanteo","label":"Replanteo"},{"id":"tubo","label":"Tubo"},{"id":"caja","label":"Caja"},{"id":"cable","label":"Cable"},{"id":"mecanismos","label":"Mecanismos"},{"id":"embellecedores","label":"Embellecedores"},{"id":"luminarias","label":"Luminarias"},{"id":"cajetines","label":"Cajetines"}],"checklistProvisional":false},"buildings":[{"id":"P.B.","tipo":"PB","col":1,"poly":[[140,130],[560,130],[560,330],[140,330]],"lab":[350.0,230.0]},{"id":"P.A.","tipo":"PA","col":2,"poly":[[640,130],[1060,130],[1060,330],[640,330]],"lab":[850.0,230.0]},{"id":"P.S.","tipo":"PS","col":3,"poly":[[140,450],[560,450],[560,650],[140,650]],"lab":[350.0,550.0]},{"id":"Anexo","tipo":"AN","col":4,"poly":[[640,450],[1060,450],[1060,650],[640,650]],"lab":[850.0,550.0]}],"tipos":{"PB":{"cubs":[{"id":"RECIBIDOR","img":"img/PB_RECIBIDOR.webp","poly":[[140,160],[480,160],[480,640],[140,640]],"lab":[310.0,400.0]},{"id":"COCINA","img":"img/PB_COCINA.webp","poly":[[480,160],[820,160],[820,640],[480,640]],"lab":[650.0,400.0]},{"id":"GARAJE","img":"img/PB_GARAJE.webp","poly":[[820,160],[1060,160],[1060,640],[820,640]],"lab":[940.0,400.0]}]},"PA":{"cubs":[{"id":"DORM1","img":"img/PA_DORM1.webp","poly":[[140,160],[480,160],[480,640],[140,640]],"lab":[310.0,400.0]},{"id":"DORM2","img":"img/PA_DORM2.webp","poly":[[480,160],[820,160],[820,640],[480,640]],"lab":[650.0,400.0]},{"id":"BANO","img":"img/PA_BANO.webp","poly":[[820,160],[1060,160],[1060,640],[820,640]],"lab":[940.0,400.0]}]},"PS":{"cubs":[{"id":"CINE","img":"img/PS_CINE.webp","poly":[[400,150],[800,150],[800,300],[400,300]],"lab":[600.0,225.0]},{"id":"HALL","img":"img/PS_HALL.webp","poly":[[330,300],[870,300],[870,440],[330,440]],"lab":[600.0,370.0]},{"id":"SAUNA","img":"img/PS_SAUNA.webp","poly":[[140,440],[560,440],[560,640],[140,640]],"lab":[350.0,540.0]},{"id":"SALON","img":"img/PS_SALON.webp","poly":[[560,440],[930,440],[930,640],[560,640]],"lab":[745.0,540.0]},{"id":"CGMP","img":"img/PS_CGMP.webp","poly":[[930,520],[1080,520],[1080,720],[930,720]],"lab":[1005.0,620.0]}]},"AN":{"cubs":[{"id":"TRASTERO","img":"img/AN_TRASTERO.webp","poly":[[140,160],[600,160],[600,640],[140,640]],"lab":[370.0,400.0]},{"id":"TALLER","img":"img/AN_TALLER.webp","poly":[[600,160],[1060,160],[1060,640],[600,640]],"lab":[830.0,400.0]}]}}};
 (()=>{
 addEventListener('error',()=>{const l=document.getElementById('loading'); if(l&&l.isConnected) l.textContent='Este navegador no puede abrir el visor. Actualízalo o prueba con Chrome o Safari recientes.';});
 const SW=1191, SH=842, NS='http://www.w3.org/2000/svg';
@@ -339,6 +341,7 @@ const T=DATA.tipos||{};
 /* ---------- configuración por tipo de instalación ---------- */
 const CFG=DATA.cfg||{};
 const KIND=CFG.kind||'fotovoltaica';               // 'fotovoltaica' | 'electrica'
+const nZon=n=>`${n} ${n===1?LB.l2.toLowerCase():LB.l2p.toLowerCase()}`;   // «1 estancia» / «N estancias»
 const bN=id=>(B[id]&&B[id].nm)?B[id].nm:`${LB.l1} ${id}`;   // nombre visible (cfg opcional nm por planta)
 const LB=Object.assign(KIND==='electrica'
   ?{l0:'Plano general',l1:'Planta',l1p:'Plantas',l2:'Estancia',l2p:'Estancias',a1:'una planta',a2:'una estancia',unit:'',intro0:'Cada color es una planta.'}
@@ -553,6 +556,19 @@ const sm=t=>{t=Math.min(1,Math.max(0,t)); return t*t*(3-2*t);};
 function apply(L){
   L.el.style.transform=`translate(${L.cam.x}px,${L.cam.y}px) scale(${L.cam.k})`;
   L.el.style.setProperty('--inv',(1/L.cam.k).toFixed(5));
+  if(CFG.detalleZoom&&L.view&&L.view.lvl===1) declutter(L);
+}
+/* cfg.detalleZoom: con muchas estancias en una planta las etiquetas se pisan; se oculta la que choque con otra
+   mayor (al acercar el plano van apareciendo; al pasar el ratón o seleccionar se ve siempre). */
+const polyArea=P=>{let a=0; for(let i=0;i<P.length;i++){const [x1,y1]=P[i],[x2,y2]=P[(i+1)%P.length]; a+=x1*y2-x2*y1;} return Math.abs(a)/2;};
+function declutter(L){
+  const k=L.cam.k, kept=[];
+  for(const z of L.data.slice().sort((a,b)=>polyArea(b.poly)-polyArea(a.poly))){
+    const g=L.zones[z.id]; if(!g) continue;
+    const w=z.text.length*8+16, r={x0:z.lab[0]*k-w/2,x1:z.lab[0]*k+w/2,y0:z.lab[1]*k-12,y1:z.lab[1]*k+22};
+    const choca=kept.some(q=>r.x0<q.x1+4&&r.x1>q.x0-4&&r.y0<q.y1&&r.y1>q.y0);
+    g.classList.toggle('lbl-off',choca); if(!choca) kept.push(r);
+  }
 }
 
 /* ---------- qué plano corresponde a cada vista ---------- */
@@ -569,12 +585,14 @@ function sheetOf(v){
   const t=B[v.b].tipo;
   if(v.lvl===1) return {url:(B[v.b].img||`img/edif_${t}.webp`)+IV,alt:`Plano: ${LB.l1.toLowerCase()} ${v.b}${KIND==='electrica'?'':', tipo '+t}`};
   const c=cubsOf(v.b).find(c=>c.id===v.c);
+  // cfg.detalleZoom: en vez de una imagen de detalle por zona, se amplía la hoja de la planta sobre la zona (que queda marcada)
+  if(CFG.detalleZoom) return {url:(B[v.b].img||`img/edif_${t}.webp`)+IV,alt:`Plano de ${B[v.b].nm||v.b} centrado en ${LB.l2.toLowerCase()} ${v.c}`,focus:bboxOf(c.poly),mark:c};
   return {url:detailUrl(t,c),alt:`Plano de detalle: ${LB.l2.toLowerCase()} ${v.c}`};
 }
 function zonesOf(v){
   const hasP=CL.length>0;
   if(CAPAS){
-    if(v.lvl===0) return DATA.buildings.map(b=>{const np=bPanels(b.id), base=np!=null?`${np} ${LB.unit}`:`${cubsOf(b.id).length} ${LB.l2p.toLowerCase()}`;
+    if(v.lvl===0) return DATA.buildings.map(b=>{const np=bPanels(b.id), base=np!=null?`${np} ${LB.unit}`:nZon(cubsOf(b.id).length);
       return {id:b.id,col:colOf(b.id),poly:b.poly,lab:b.lab,text:b.nm||b.id,title:`${bN(b.id)}`,sub:bTxt(b.id),
         aria:`${bN(b.id)}, ${join(bTxt(b.id),base)}`.replace(/ · /g,', '),n:base,pct:()=>capaAgg(CAPA,[b.id]).pct,go:{lvl:1,b:b.id}};});
     if(v.lvl===1){ if(isStr()) return [];
@@ -585,13 +603,15 @@ function zonesOf(v){
     const c=s.mark; return [{id:'__mark',col:colOf(v.b),poly:cubPoly(v.b,c),lab:cubLab(v.b,c),text:c.id,mark:true,aria:''}];
   }
   if(v.lvl===0) return DATA.buildings.map(b=>{const tp=T[b.tipo], tt=tipoTxt(b.tipo);
-    const base=(LB.unit&&tp.panels!=null)?`${tp.panels} ${LB.unit}`:`${tp.cubs.length} ${LB.l2p.toLowerCase()}`;
+    const base=(LB.unit&&tp.panels!=null)?`${tp.panels} ${LB.unit}`:nZon(tp.cubs.length);
     return {id:b.id,col:b.col||b.tipo,poly:b.poly,lab:b.lab,text:b.nm||b.id,
       title:`${bN(b.id)}`,sub:tt,aria:`${bN(b.id)}, ${join(tt,base)}`.replace(/ · /g,', '),n:base,
       pct:hasP?()=>agg(bZones(b.id)).pct:null,go:{lvl:1,b:b.id}};});
   if(v.lvl===1) return cubsOf(v.b).map(c=>({id:c.id,col:colOf(v.b),poly:c.poly,lab:c.lab,text:c.id,
     title:`${LB.l2} ${c.id}`,sub:LB.l2,aria:`${LB.l2} ${c.id}${cn(c)?', '+cn(c):''}`,n:cn(c),
     pct:hasP?()=>pctZ(v.b,c.id):null,go:{lvl:2,b:v.b,c:c.id}}));
+  if(CFG.detalleZoom){ const s=sheetOf(v); if(!s.mark) return [];
+    const c=s.mark; return [{id:'__mark',col:colOf(v.b),poly:c.poly,lab:c.lab,text:c.id,mark:true,aria:''}]; }
   return [];
 }
 
@@ -718,7 +738,7 @@ function render(){
     const neds=new Set(DATA.buildings.map(b=>b.ed).filter(Boolean)).size;
     p.textContent=`${DATA.buildings.length} ${LB.l1p.toLowerCase()}${neds?' · '+neds+' edificios':(KIND==='electrica'||!Object.keys(T).length)?'':' · '+Object.keys(T).length+' tipos'}. ${LB.intro0}`;}
   else if(v.lvl===1){ey.textContent='Nivel 2 de 3';h.textContent=`${bN(v.b)}`;const np=bPanels(v.b);
-    p.textContent=isStr()?join(tt,`${strsOf(v.b).length} strings en este plano`):join(tt,`${cubsOf(v.b).length} ${LB.l2p.toLowerCase()}`,(LB.unit&&np!=null)?`${np} ${LB.unit}`:'');}
+    p.textContent=isStr()?join(tt,`${strsOf(v.b).length} strings en este plano`):join(tt,nZon(cubsOf(v.b).length),(LB.unit&&np!=null)?`${np} ${LB.unit}`:'');}
   else{ey.textContent='Nivel 3 de 3';h.textContent=`${LB.l2} ${cubName(v.b,v.c)}`;const c=cubsOf(v.b).find(c=>c.id===v.c);
     p.textContent=join(`${bN(v.b)}`,tt,cn(c));}
   head.append(ey,h,p);
@@ -868,7 +888,7 @@ function renderChecks(){
   } else {
     const list=v.lvl===0?allZones():bZones(v.b), a=agg(list); pct=a.pct;
     ey.textContent='Avance de obra'; h.textContent=v.lvl===0?'Total de la obra':`${bN(v.b)}`; cnt.textContent=a.pct+'%';
-    p.textContent=`${a.done} de ${a.max} checks · ${a.n} ${LB.l2p.toLowerCase()}`;
+    p.textContent=`${a.done} de ${a.max} checks · ${nZon(a.n)}`;
     for(const x of a.per){
       const li=document.createElement('li'); li.className='ag';
       const r=document.createElement('div'); r.className='row'; const n=document.createElement('span'); n.textContent=x.k.label; const c=document.createElement('b'); c.textContent=`${x.d}/${x.n}`; r.append(n,c);
