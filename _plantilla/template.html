@@ -880,10 +880,11 @@ function renderChecks(){
     const blocks=v.lvl===0?DATA.buildings.map(b=>b.id):[v.b], a=capaAgg(CAPA,blocks); pct=a.pct;
     ey.textContent='Avance de obra'; h.textContent=v.lvl===0?'Total de la obra':`${bN(v.b)}`; cnt.textContent=a.pct+'%';
     p.textContent=`${capaOf(CAPA).label}: ${a.d} de ${a.n} ${a.unit}`;
-    // los checks de edificio y de obra que se marcan en esta vista salen abajo (extraRows), no como total
+    // los checks de edificio y de obra que se marcan en esta vista salen arriba (se marcan aquí); los totales, debajo
+    const nExtra=body.children.length; extraRows();
+    if(body.children.length>nExtra) subHead(v.lvl===0?'Avance de la obra':'Avance del bloque');
     for(const c of CAPAS){ if(c.nivel==='obra'||(c.nivel==='edificio'&&v.lvl===1)) continue;
       const x=capaAgg(c.id,blocks); aggRow(`${c.label} (${x.unit})`,x.d,x.n,c.id===CAPA); }
-    extraRows();
   } else {
     const list=v.lvl===0?allZones():bZones(v.b), a=agg(list); pct=a.pct;
     ey.textContent='Avance de obra'; h.textContent=v.lvl===0?'Total de la obra':`${bN(v.b)}`; cnt.textContent=a.pct+'%';
