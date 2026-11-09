@@ -40,7 +40,8 @@ Estado: **propuesta** (29/10/2026). El checklist **eléctrico** es el dado por I
   "zones": {
     "P.S./CINE": {
       "replanteo": {"done": true, "by": "J.", "date": "2026-10-29"},
-      "tubo": {"done": false}
+      "tubo": {"done": true, "by": "A.G.", "date": "2026-11-09", "dias": [{"date": "2026-11-06", "by": "A.G."}, {"date": "2026-11-09", "by": "A.G."}]},
+      "tubo__fin": {"done": false}
     }
   }
 }

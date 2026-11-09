@@ -15,17 +15,18 @@
   --on-t1:#FFFFFF; --on-t2:#FFFFFF; --on-t3:#FFFFFF; --on-t4:#2B2500;
   --ok:#1E8A4C; --on-ok:#FFFFFF;
   --past:#FFF1D6; --past-ink:#6B4300;
+  --curso:#B86E00; --curso-bg:#FFF4E0;
   --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
   --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
   --shadow:0 1px 2px rgba(20,32,43,.08),0 6px 20px rgba(20,32,43,.08);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --ok:#4CC38A; --on-ok:#06210F; --past:#3A2A0A; --past-ink:#FFD58A;
+  --ok:#4CC38A; --on-ok:#06210F; --past:#3A2A0A; --past-ink:#FFD58A; --curso:#F2B35B; --curso-bg:#33250E;
   --bg:#0E141A; --surface:#161F27; --ink:#E6EDF3; --muted:#92A3B3; --line:#26323D;
   --stage:#0A0F13; --accent:#63B4EA; --accent-ink:#06202F; --hot:rgba(99,180,234,.14);
   --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35); color-scheme:dark}}
 :root[data-theme="dark"]{
-  --ok:#4CC38A; --on-ok:#06210F; --past:#3A2A0A; --past-ink:#FFD58A;
+  --ok:#4CC38A; --on-ok:#06210F; --past:#3A2A0A; --past-ink:#FFD58A; --curso:#F2B35B; --curso-bg:#33250E;
   --bg:#0E141A; --surface:#161F27; --ink:#E6EDF3; --muted:#92A3B3; --line:#26323D;
   --stage:#0A0F13; --accent:#63B4EA; --accent-ink:#06202F; --hot:rgba(99,180,234,.14);
   --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35); color-scheme:dark}
@@ -231,6 +232,8 @@ button.chk:hover{background:var(--hot)}
   .chk{min-height:38px;padding:3px 8px;gap:10px}
   .checks.edit .chk{min-height:44px}
   .chk .who{display:inline;margin-left:8px;font-size:11px}
+  .fin{height:30px;padding:0 7px;font-size:11px}
+  .tarea .chk .who{display:block;margin-left:0}
   .cnote{padding:6px 10px;font-size:11px}
   .cnote:not(.warn){display:none}
   .checks:not(.open) .cnote.warn{display:block}
@@ -285,6 +288,20 @@ button.chk:hover{background:var(--hot)}
 .zone.sel .tag rect{fill:var(--accent);stroke:#fff}
 .zone.sel .tag text{fill:var(--accent-ink)}
 .chk[aria-checked="mixed"] .box{border-color:var(--ok);color:var(--ok)}
+/* tarea: check de avance del día + botón «Terminada» */
+.cl li.tarea{display:flex;align-items:center;gap:6px}
+.cl li.tarea>.chk{flex:1;min-width:0}
+.tarea.curso .chk .who{color:var(--curso)}
+.tarea.terminada .chk .lbl{color:var(--ok);font-weight:600}
+.tarea.terminada .chk .who{color:var(--ok)}
+.fin{flex:none;display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 9px;border:1.5px solid var(--line);border-radius:16px;background:var(--surface);color:var(--muted);font:600 12px var(--sans);cursor:pointer;white-space:nowrap}
+.fin svg{width:13px;height:13px;opacity:.35}
+button.fin:hover{border-color:var(--ok);color:var(--ok)}
+.fin[aria-pressed="true"],.fin[data-est="true"]{background:var(--ok);border-color:var(--ok);color:var(--on-ok)}
+.fin[aria-pressed="true"] svg,.fin[data-est="true"] svg{opacity:1}
+.fin[aria-pressed="mixed"]{border-color:var(--ok);color:var(--ok)}
+.fin:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ag .encurso{color:var(--curso);font-weight:500}
 .chead h2.hsel{color:var(--accent);font-size:15px;font-weight:600;line-height:1.25}
 .chk.cur .lbl{color:var(--accent)}
 @media (max-width:820px){.capas{left:8px;bottom:8px}.capas button{height:40px;padding:0 11px}}
@@ -395,15 +412,27 @@ let vw=0, vh=0, cur=null, busy=false, view=null;
 let PROG={zones:{},updated:null,error:false};
 const PKEY=(b,c)=>b+'/'+c;
 const zst=(b,c)=>PROG.zones[PKEY(b,c)]||{};
-const isDone=(b,c,k)=>{const s=zst(b,c)[k]; return !!(s&&s.done);};
+/* Dos marcas por tarea (desde el 09/11/2026):
+   - Avance: el check de siempre (id «tubo»). Se marca cada día que se trabaja en la tarea, aunque no se acabe; una por
+     día del trabajo. El servidor devuelve en «dias» los días trabajados.
+   - Terminada: el mismo id con el sufijo «__fin». Se marca una vez, el día que se acaba la tarea. El % de avance (zonas,
+     plantas, obra y Airtable) cuenta solo las terminadas. */
+const FIN='__fin', finId=k=>k+FIN;
+const rawDone=(b,c,k)=>{const s=zst(b,c)[k]; return !!(s&&s.done);};
+const isDone=(b,c,k)=>rawDone(b,c,finId(k));   // tarea terminada
+const finInfo=(b,c,k)=>zst(b,c)[finId(k)]||{};
+// Días trabajados (marca de avance). Con un servidor anterior sin «dias», la última marca hecha cuenta como un día.
+const diasDe=(b,c,k)=>{const s=zst(b,c)[k]; if(!s) return []; if(Array.isArray(s.dias)) return s.dias; return s.done&&s.date?[{date:s.date,by:s.by}]:[];};
+const hechoDia=(b,c,k,d)=>diasDe(b,c,k).some(x=>x.date===d);
+const enCurso=(b,c,k)=>!isDone(b,c,k)&&diasDe(b,c,k).length>0;
 const CLz=(b,c)=>CL.filter(k=>!k.soloEn||k.soloEn.includes(b+'/'+c));   // checks de la zona (soloEn: solo en esas zonas, p. ej. el cuadro eléctrico)
 const zdone=(b,c)=>CLz(b,c).reduce((n,k)=>n+(isDone(b,c,k.id)?1:0),0);
 const pctZ=(b,c)=>{const n=CLz(b,c).length; return n?Math.round(100*zdone(b,c)/n):0;};
 const bZones=b=>cubsOf(b).map(c=>[b,c.id]);
 const allZones=()=>DATA.buildings.flatMap(b=>bZones(b.id));
 function agg(list){
-  const per=CL.map(k=>({k,d:0,n:0})); let done=0;
-  for(const [b,c] of list) per.forEach(p=>{ if(p.k.soloEn&&!p.k.soloEn.includes(b+'/'+c)) return; p.n++; if(isDone(b,c,p.k.id)){p.d++;done++;} });
+  const per=CL.map(k=>({k,d:0,n:0,c:0})); let done=0;
+  for(const [b,c] of list) per.forEach(p=>{ if(p.k.soloEn&&!p.k.soloEn.includes(b+'/'+c)) return; p.n++; if(isDone(b,c,p.k.id)){p.d++;done++;} else if(enCurso(b,c,p.k.id)) p.c++; });
   const max=per.reduce((a,p)=>a+p.n,0);
   for(let i=per.length-1;i>=0;i--) if(!per[i].n) per.splice(i,1);
   return {n:list.length,per,done,max,pct:max?Math.round(100*done/max):0};
@@ -480,8 +509,14 @@ function estadoPend(b,c,k){
   return (ult.estado==='reintentando'||navigator.onLine===false)?'movil':'env';
 }
 const isPend=(b,c,k)=>!!estadoPend(b,c,k);
-function aplicarMarca(q){ const z=PROG.zones[q.zona]||(PROG.zones[q.zona]={});
-  z[q.check]=q.done?{done:true,by:(AUTH()&&AUTH().iniciales)||'',date:q.fecha||(q.ts||'').slice(0,10)}:{done:false}; }
+function aplicarMarca(q,quien){ const z=PROG.zones[q.zona]||(PROG.zones[q.zona]={});
+  const by=quien||(AUTH()&&AUTH().iniciales)||'', dia=q.fecha||(q.ts||'').slice(0,10);
+  if(q.check.endsWith(FIN)){ z[q.check]=q.done?{done:true,by,date:dia}:{done:false}; return; }
+  // Avance: se pone o se quita ese día en la lista de días trabajados.
+  const prev=z[q.check]; const dias=(prev&&Array.isArray(prev.dias)?prev.dias:(prev&&prev.done&&prev.date?[{date:prev.date,by:prev.by}]:[]))
+    .filter(x=>x.date!==dia);
+  if(q.done) dias.push({date:dia,by}); dias.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+  z[q.check]=q.done?{done:true,by,date:dia,dias}:{done:false,dias}; }
 function applyQueue(){
   APPQ.slice().sort((a,b)=>(a.ts||'')<(b.ts||'')?-1:(a.ts||'')>(b.ts||'')?1:0).forEach(aplicarMarca);
   QUEUE.forEach(aplicarMarca);
@@ -524,17 +559,17 @@ function toggleSel(id){
 }
 function limpiarSel(){ if(!SEL.size) return; SEL.clear(); pintarSel(); refreshProg(); }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&SEL.size) limpiarSel(); });
-function toggleCheck(b,c,id){
+function marcar(b,c,check,d){
   if(!CAN()) return;
-  const key=PKEY(b,c), z=PROG.zones[key]||(PROG.zones[key]={}), d=!isDone(b,c,id), now=new Date().toISOString();
-  const fecha=DIA();
-  if(DEMO){ z[id]=d?{done:true,by:'Demo',date:fecha}:{done:false}; saveLocal(); }
-  else {
-    QUEUE.push({external_id:[CFG.obraId||'',key,id,now].join('|'),obra:CFG.obraId||'',zona:key,check:id,done:d,ts:now,fecha});
-    saveQ(); applyQueue(); if(navigator.onLine!==false) QFAIL=false; flushQ();
-  }
+  const key=PKEY(b,c), now=new Date().toISOString(), fecha=DIA();
+  const q={external_id:[CFG.obraId||'',key,check,now].join('|'),obra:CFG.obraId||'',zona:key,check,done:d,ts:now,fecha};
+  if(DEMO){ aplicarMarca(q,'Demo'); saveLocal(); }
+  else { QUEUE.push(q); saveQ(); applyQueue(); if(navigator.onLine!==false) QFAIL=false; flushQ(); }
   PROG.updated=now; refreshProg();
 }
+// El check: avance en el día del trabajo elegido (marcar o quitar ese día). El botón «Terminada»: la tarea se acabó.
+function toggleCheck(b,c,id){ marcar(b,c,id,!hechoDia(b,c,id,DIA())); }
+function toggleFin(b,c,id){ marcar(b,c,finId(id),!isDone(b,c,id)); }
 
 /* ---------- geometría de la cámara ---------- */
 const measure=()=>{const r=stage.getBoundingClientRect(); vw=r.width; vh=r.height;};
@@ -802,6 +837,7 @@ din.addEventListener('change',()=>{
   if(!v||v>=h) diaElegido=null; else if(v>=MIN_DIA()) diaElegido=v;   // fuera de rango: se queda el que había
   din.value=DIA(); syncDia(); refreshProg();
 });
+const AYUDA='Marca el check cada día que trabajes en una tarea, aunque no la acabes. Pulsa «Terminada» el día que la termines.';
 function renderChecks(){
   if(!CL.length||!view){ checks.hidden=true; cpill.hidden=true; return; }
   checks.hidden=false; cpill.hidden=false;
@@ -813,15 +849,31 @@ function renderChecks(){
   const p=document.createElement('p'); const bar=document.createElement('div'); bar.className='cbar'; const fill=document.createElement('i'); bar.appendChild(fill);
   const body=document.createElement('ul'); body.className='cl';
   let pct;
+  // Botón «Terminada» de una tarea (o de varias zonas a la vez): pulsado = terminada; «mixed» = solo en algunas zonas.
+  const finBtn=(est,onClick,edit)=>{
+    const f=document.createElement(edit?'button':'span'); f.className='fin';
+    f.innerHTML=ICON_OK+'<span>Terminada</span>';
+    if(edit){ f.type='button'; f.setAttribute('aria-pressed',est); f.title=est==='true'?'Quitar «Terminada»':'Marcar la tarea como terminada';
+      f.addEventListener('click',onClick); }
+    else { f.dataset.est=est; if(est==='false') f.hidden=true; }
+    return f;
+  };
+  const metaTxt=(ep,txt)=>ep?(ep==='env'?'Enviando…':ep==='movil'?'Guardado en el móvil · se subirá solo':'Sin enviar'):txt;
+  const listaDias=ds=>{ const t=ds.map(x=>fmtDate(x.date)); return t.length>3?`${t.slice(-3).join(', ')} y ${t.length-3} más`:t.join(', '); };
   const chkRow=(zb,zc,id,label,isCur)=>{
-    const s=zst(zb,zc)[id]||{}, d=!!s.done;
-    const li=document.createElement('li'); const edit=CAN(); const el=document.createElement(edit?'button':'div'); el.className='chk'+(isCur?' cur':'');
-    el.setAttribute('role','checkbox'); el.setAttribute('aria-checked',d); if(edit){ el.type='button'; el.addEventListener('click',()=>toggleCheck(zb,zc,id)); } else el.setAttribute('aria-readonly','true');
+    const hoy=DIA(), ds=diasDe(zb,zc,id), d=ds.some(x=>x.date===hoy), fin=isDone(zb,zc,id), fi=finInfo(zb,zc,id);
+    const li=document.createElement('li'); li.className='tarea'+(fin?' terminada':ds.length?' curso':'');
+    const edit=CAN(); const el=document.createElement(edit?'button':'div'); el.className='chk'+(isCur?' cur':'');
+    el.setAttribute('role','checkbox'); el.setAttribute('aria-checked',d);
+    el.setAttribute('aria-label',`${label}: ${hoy===HOY()?'trabajado hoy':'trabajado el '+fmtDate(hoy)}`);
+    if(edit){ el.type='button'; el.addEventListener('click',()=>toggleCheck(zb,zc,id)); } else el.setAttribute('aria-readonly','true');
     const box=document.createElement('span'); box.className='box'; box.innerHTML=ICON_OK;
     const tx=document.createElement('span'); const l=document.createElement('span'); l.className='lbl'; l.textContent=label; tx.appendChild(l);
-    const ep=estadoPend(zb,zc,id), env=ep==='env';
-    const meta=ep?(env?'Enviando…':ep==='movil'?'Guardado en el móvil · se subirá solo':'Sin enviar'):(d?(CAPAS?join(s.date?'Completado el '+fmtDate(s.date):'Completado',s.by):join(s.by,fmtDate(s.date))):''); if(meta){ const w=document.createElement('span'); w.className='who'+(env?' env':''); w.textContent=meta; if(env) w.setAttribute('role','status'); tx.appendChild(w); }
-    el.append(box,tx); li.appendChild(el); body.appendChild(li);
+    const ep=estadoPend(zb,zc,id)||estadoPend(zb,zc,finId(id)), env=ep==='env';
+    const quien=[...new Set(ds.map(x=>x.by).filter(Boolean))].join(', ');
+    const meta=metaTxt(ep,fin?join('Terminada el '+fmtDate(fi.date),fi.by):ds.length?join('Trabajado: '+listaDias(ds),quien):'');
+    if(meta){ const w=document.createElement('span'); w.className='who'+(env?' env':''); w.textContent=meta; if(env) w.setAttribute('role','status'); tx.appendChild(w); }
+    el.append(box,tx); li.append(el,finBtn(String(fin),()=>toggleFin(zb,zc,id),edit)); body.appendChild(li);
   };
   const aggRow=(label,dn,n,cur_)=>{
     const li=document.createElement('li'); li.className='ag';
@@ -839,18 +891,23 @@ function renderChecks(){
   // Varias zonas seleccionadas: cada check del checklist sale una vez, con su estado en todas ellas.
   const selIds=(v.lvl===1&&puedeSel())?[...SEL].filter(c=>cubsOf(v.b).some(x=>x.id===c)):[];
   const chkSel=(zb,zs,id,label)=>{
-    const hechas=zs.filter(c=>isDone(zb,c,id)).length, todas=hechas===zs.length, est=todas?'true':hechas?'mixed':'false';
-    const li=document.createElement('li'); const el=document.createElement('button'); el.type='button'; el.className='chk';
+    const hoy=DIA(), conDia=c=>hechoDia(zb,c,id,hoy);
+    const hechas=zs.filter(conDia).length, todas=hechas===zs.length, est=todas?'true':hechas?'mixed':'false';
+    const fins=zs.filter(c=>isDone(zb,c,id)).length, todasFin=fins===zs.length;
+    const li=document.createElement('li'); li.className='tarea'+(todasFin?' terminada':'');
+    const el=document.createElement('button'); el.type='button'; el.className='chk';
     el.setAttribute('role','checkbox'); el.setAttribute('aria-checked',est);
-    // Si ya está en todas, se desmarca en todas; si no, se marca en las que falta (una marca por zona).
-    el.addEventListener('click',()=>{ for(const c of zs) if(todas||!isDone(zb,c,id)) toggleCheck(zb,c,id); });
+    // Si ya está en todas, se desmarca en todas; si no, se marca en las que falta (una marca por zona). Igual «Terminada».
+    el.addEventListener('click',()=>{ for(const c of zs) if(todas||!conDia(c)) toggleCheck(zb,c,id); });
     const box=document.createElement('span'); box.className='box'; box.innerHTML=est==='mixed'?ICON_MIX:ICON_OK;
     const tx=document.createElement('span'); const l=document.createElement('span'); l.className='lbl'; l.textContent=label; tx.appendChild(l);
-    const eps=zs.map(c=>estadoPend(zb,c,id)).filter(Boolean), env=eps.includes('env');
+    const eps=zs.flatMap(c=>[estadoPend(zb,c,id),estadoPend(zb,c,finId(id))]).filter(Boolean), env=eps.includes('env');
     const w=document.createElement('span'); w.className='who'+(env?' env':'');
-    w.textContent=eps.length?(env?'Enviando…':eps.includes('movil')?'Guardado en el móvil · se subirá solo':'Sin enviar'):`${hechas} de ${zs.length}`;
+    w.textContent=eps.length?(env?'Enviando…':eps.includes('movil')?'Guardado en el móvil · se subirá solo':'Sin enviar')
+      :join(`${hechas} de ${zs.length} ${hoy===HOY()?'hoy':'el '+fmtDate(hoy)}`,fins?`${fins} terminada${fins===1?'':'s'}`:'');
     if(env) w.setAttribute('role','status'); tx.appendChild(w);
-    el.append(box,tx); li.appendChild(el); body.appendChild(li);
+    const fb=finBtn(todasFin?'true':fins?'mixed':'false',()=>{ for(const c of zs) if(todasFin||!isDone(zb,c,id)) toggleFin(zb,c,id); },true);
+    el.append(box,tx); li.append(el,fb); body.appendChild(li);
   };
   if(selIds.length){
     const zsDe=k=>selIds.filter(c=>CLz(v.b,c).some(x=>x.id===k.id));
@@ -892,7 +949,9 @@ function renderChecks(){
     p.textContent=`${a.done} de ${a.max} checks · ${nZon(a.n)}`;
     for(const x of a.per){
       const li=document.createElement('li'); li.className='ag';
-      const r=document.createElement('div'); r.className='row'; const n=document.createElement('span'); n.textContent=x.k.label; const c=document.createElement('b'); c.textContent=`${x.d}/${x.n}`; r.append(n,c);
+      const r=document.createElement('div'); r.className='row'; const n=document.createElement('span'); n.textContent=x.k.label;
+      if(x.c){ const e=document.createElement('small'); e.className='encurso'; e.textContent=` · ${x.c} en curso`; n.appendChild(e); }
+      const c=document.createElement('b'); c.textContent=`${x.d}/${x.n}`; r.append(n,c);
       const b=document.createElement('div'); b.className='cbar'; const f=document.createElement('i'); f.style.width=(x.n?100*x.d/x.n:0)+'%'; b.appendChild(f);
       li.append(r,b); body.appendChild(li);
     }
@@ -913,7 +972,7 @@ function renderChecks(){
   checks.classList.toggle('edit',CAN());
   note.textContent=prov+(wmsg||emsg||(PROG.error?'No se pudo leer el avance; se reintentará en un minuto.'
     :DEMO?'Modo demostración: los checks se guardan solo en este navegador.'
-    :WRITE?(PROG.updated?`Última actualización: ${fmtStamp(PROG.updated)}. Toca un check para marcarlo; se guarda en Airtable.`:'Toca un check para marcarlo; se guarda en Airtable.')
+    :WRITE?(PROG.updated?`Última actualización: ${fmtStamp(PROG.updated)}. ${AYUDA}`:AYUDA)
     :PROG.updated?`Última actualización: ${fmtStamp(PROG.updated)}. Los checks se rellenan desde la App IEC.`:'Todavía no hay registros. Los checks se rellenan desde la App IEC.'));
   if(CAN()){
     // Se cambia todo menos el selector de fecha, que se queda en su sitio sin sacarlo del documento: así no pierde
