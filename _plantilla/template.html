@@ -455,7 +455,8 @@ function saveLocal(){ try{ localStorage.setItem(LSKEY,JSON.stringify({zones:PROG
 async function loadProgress(){
   if(!CL.length) return;
   if(CFG.progressUrl){
-    const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),5000);
+    // 15 s: si el backend estaba parado (instancias mínimas 0) tarda unos segundos en arrancar y, con 5 s, la primera lectura fallaba.
+    const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),15000);
     try{
       const t=WRITE?await tok():null;                   // dentro de la App se lee con el token; fuera, lectura pública
       const r=await fetch(CFG.progressUrl+(CFG.progressUrl.includes('?')?'&':'?')+'t='+Date.now(),{cache:'no-store',signal:ctl.signal,headers:t?{Authorization:'Bearer '+t}:{}});
