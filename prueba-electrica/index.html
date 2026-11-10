@@ -838,8 +838,13 @@ din.addEventListener('change',()=>{
   din.value=DIA(); syncDia(); refreshProg();
 });
 const AYUDA='Marca el check cada día que trabajes en una tarea, aunque no la acabes. Pulsa «Terminada» el día que la termines.';
+// Posición del scroll del panel: se conserva al repintar (marcar un check, cada envío) mientras no se cambie de vista.
+let ultimaVistaChecks=null;
 function renderChecks(){
   if(!CL.length||!view){ checks.hidden=true; cpill.hidden=true; return; }
+  const clPrev=checks.querySelector('.cl'), scrollLista=clPrev?clPrev.scrollTop:0, scrollPanel=checks.scrollTop;
+  const vistaChecks=[view.lvl,view.b,view.c,CAPA,[...SEL].join(',')].join('|'), mismaVista=vistaChecks===ultimaVistaChecks;
+  ultimaVistaChecks=vistaChecks;
   checks.hidden=false; cpill.hidden=false;
   const v=view, open=checks.classList.contains('open');
   const uds=(k,c)=>k.porPanel&&c&&c.n?` (${c.n})`:'';
@@ -983,6 +988,7 @@ function renderChecks(){
     else { for(const n of [...checks.childNodes]) if(n!==cdia) n.remove(); for(const n of antes) checks.insertBefore(n,cdia); checks.append(body,note,cclose); }
   }
   else checks.replaceChildren(head,body,note,cclose);
+  if(mismaVista){ body.scrollTop=scrollLista; checks.scrollTop=scrollPanel; }
 }
 
 const fsnav=document.getElementById('fsnav'), fsmenu=document.getElementById('fsmenu'), fstog=document.getElementById('fstog'), fstxt=document.getElementById('fstxt'), fsback=document.getElementById('fsback');
