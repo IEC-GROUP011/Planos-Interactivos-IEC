@@ -8,6 +8,7 @@
     "checks": [
       {"id": "replanteo", "label": "Replanteo", "nivel_tipico": "cubierta"},
       {"id": "estructura", "label": "Estructura", "nivel_tipico": "cubierta"},
+      {"id": "subida_placas", "label": "Subida de placas a cubierta", "nivel_tipico": "cubierta"},
       {"id": "optimizadores", "label": "Optimizadores", "nivel_tipico": "cubierta"},
       {"id": "paneles", "label": "Paneles", "nivel_tipico": "cubierta"},
       {"id": "strings", "label": "Strings", "nivel_tipico": "string"},
